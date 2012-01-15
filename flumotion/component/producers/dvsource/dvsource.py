@@ -19,6 +19,7 @@
 
 # Headers in this file shall remain intact.
 
+import os
 import gst
 from twisted.internet import defer
 
@@ -67,7 +68,7 @@ class DVSource(feedcomponent.ParseLaunchComponent):
             addMessage(msg)
             raise errors.ConfigError(msg)
 
-        if os.path.exists(fileName):
+        if not os.path.exists(fileName):
             msg = messages.Error(T_(N_("Configuration error: '%s' " \
                 "is not a valid filename." % fileName)))
             self.debug("'%s' is not a valid filename",
@@ -106,7 +107,6 @@ class DVSource(feedcomponent.ParseLaunchComponent):
         # unittest the pipeline
         # need a queue in case tcpserversink blocks somehow
         template = ('filesrc %s'
-                    '    ! tee name=t'
                     '    ! queue leaky=2 max-size-time=1000000000'
                     '    ! dvdemux name=demux'
                     '  demux. ! queue ! %s name=decoder'
@@ -114,8 +114,7 @@ class DVSource(feedcomponent.ParseLaunchComponent):
                     '  demux. ! queue ! audio/x-raw-int '
                     '    ! volume name=setvolume'
                     '    ! level name=volumelevel message=true '
-                    '    ! @feeder:audio@'
-                    '    t. ! queue ! @feeder:dv@' % (filename, decoder))
+                    '    ! @feeder:audio@' % (filename, decoder))
 
         return template
 

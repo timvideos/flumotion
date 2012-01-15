@@ -9,7 +9,7 @@
       <feeder name="dv" />
       <entries>
         <entry type="component" location="dvsource.py"
-               function="Firewire" />
+               function="DVSource" />
         <entry type="admin/gtk" location="admin_gtk.py"
                function="GUIClass" />
       </entries>
