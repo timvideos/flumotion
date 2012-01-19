@@ -14,6 +14,7 @@ SUBDIRS = \
 	audiotest \
 	bttv \
 	blackmagic \
+	dvsource \
 	firewire \
 	icecast \
 	ivtv \
