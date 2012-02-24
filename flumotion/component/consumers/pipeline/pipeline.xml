@@ -8,7 +8,7 @@
       <eater name="default" />
       <entries>
         <entry type="component" location="pipeline.py"
-               function="Producer" />
+               function="Consumer" />
       </entries>
 
       <synchronization required="yes" />
