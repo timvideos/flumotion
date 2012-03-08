@@ -37,7 +37,7 @@ T_ = gettexter()
 # See comments in gstdvdec.c for details on the dv format.
 
 
-class DVSource(feedcomponent.ParseLaunchComponent):
+class DVSwitch(feedcomponent.ParseLaunchComponent):
 
     def do_check(self):
         self.debug('running PyGTK/PyGST and configuration checks')
