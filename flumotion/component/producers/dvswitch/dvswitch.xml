@@ -31,8 +31,8 @@
                   _description="Add black borders if DAR can't be kept." />
         <property name="framerate" type="fraction"
                   _description="The framerate (in fps)."/>
-        <property name="filename" type="string"
-                  _description="File name." />
+        <property name="uri" type="string"
+                  _description="DVSwitch URI of the from dvswitch://127.0.0.1:200/ ." />
         <property name="deinterlace-mode" type="string"
                   _description="The deinterlacing mode to use.(default=auto)" />
         <property name="deinterlace-method" type="string"
