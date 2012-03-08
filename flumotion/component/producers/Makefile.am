@@ -15,6 +15,7 @@ SUBDIRS = \
 	bttv \
 	blackmagic \
 	dvsource \
+	dvswitch \
 	firewire \
 	icecast \
 	ivtv \
