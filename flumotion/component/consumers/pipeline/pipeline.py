@@ -17,11 +17,11 @@
 
 from flumotion.component import feedcomponent
 
-__all__ = ['Producer']
+__all__ = ['Consumer']
 __version__ = "$Rev: 7162 $"
 
 
-class Producer(feedcomponent.ParseLaunchComponent):
+class Consumer(feedcomponent.ParseLaunchComponent):
     logCategory = 'prod-pipe'
 
     def get_pipeline_string(self, properties):
