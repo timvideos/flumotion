@@ -21,9 +21,11 @@
 from twisted.internet import defer
 # moving this down causes havoc when running this file directly for some reason
 from flumotion.common import errors, log
-
-import gobject
-import gst
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import GObject, Gst 
+GObject.threads_init()
+Gst.init(None)
 
 __version__ = "$Rev$"
 
@@ -47,13 +49,13 @@ def verbose_deep_notify_cb(object, orig, pspec, component):
     A default deep-notify signal handler for pipelines.
     """
     value = orig.get_property(pspec.name)
-    if pspec.value_type == gobject.TYPE_BOOLEAN:
+    if pspec.value_type == GObject.TYPE_BOOLEAN:
         if value:
             value = 'TRUE'
         else:
             value = 'FALSE'
         output = value
-    elif pspec.value_type == gst.Caps.__gtype__:
+    elif pspec.value_type == Gst.Caps.__gtype__:
         output = caps_repr(value)
     else:
         output = value
@@ -87,8 +89,8 @@ def element_factory_has_property(element_factory, property_name):
     @rtype: boolean
     """
     # FIXME: find a better way than instantiating one
-    e = gst.element_factory_make(element_factory)
-    for pspec in gobject.list_properties(e):
+    e = Gst.ElementFactory.make(element_factory,'None')
+    for pspec in GObject.list_properties(e):
         if pspec.name == property_name:
             return True
     return False
@@ -102,7 +104,7 @@ def element_factory_has_property_value(element_factory, property_name, value):
     @rtype: boolean
     """
     # FIXME: find a better way than instantiating one
-    e = gst.element_factory_make(element_factory)
+    e = Gst.ElementFactory.make(element_factory,'None')
     try:
         e.set_property(property_name, value)
     except TypeError:
@@ -117,8 +119,8 @@ def element_factory_exists(name):
 
     @rtype: boolean
     """
-    registry = gst.registry_get_default()
-    factory = registry.find_feature(name, gst.TYPE_ELEMENT_FACTORY)
+    registry = Gst.registry_get()
+    factory = registry.find_feature(name, Gst.TYPE_ELEMENT_FACTORY)
 
     if factory:
         return True
@@ -133,7 +135,7 @@ def get_plugin_version(plugin_name):
     @rtype: tuple of (major, minor, micro, nano), or None if it could not be
             found or determined
     """
-    plugin = gst.registry_get_default().find_plugin(plugin_name)
+    plugin = Gst.registry_get().find_plugin(plugin_name)
 
     if not plugin:
         return None
@@ -147,25 +149,25 @@ def get_plugin_version(plugin_name):
 
 
 def get_state_change(old, new):
-    table = {(gst.STATE_NULL, gst.STATE_READY):
-             gst.STATE_CHANGE_NULL_TO_READY,
-             (gst.STATE_READY, gst.STATE_PAUSED):
-             gst.STATE_CHANGE_READY_TO_PAUSED,
-             (gst.STATE_PAUSED, gst.STATE_PLAYING):
-             gst.STATE_CHANGE_PAUSED_TO_PLAYING,
-             (gst.STATE_PLAYING, gst.STATE_PAUSED):
-             gst.STATE_CHANGE_PLAYING_TO_PAUSED,
-             (gst.STATE_PAUSED, gst.STATE_READY):
-             gst.STATE_CHANGE_PAUSED_TO_READY,
-             (gst.STATE_READY, gst.STATE_NULL):
-             gst.STATE_CHANGE_READY_TO_NULL}
+    table = {(Gst.STATE.NULL, Gst.STATE.READY):
+             Gst.STATE.CHANGE_NULL_TO_READY,
+             (Gst.STATE.READY, Gst.STATE.PAUSED):
+             Gst.STATE.CHANGE_READY_TO_PAUSED,
+             (Gst.STATE.PAUSED, Gst.STATE.PLAYING):
+             Gst.STATE.CHANGE_PAUSED_TO_PLAYING,
+             (Gst.STATE.PLAYING, Gst.STATE.PAUSED):
+             Gst.STATE.CHANGE_PLAYING_TO_PAUSED,
+             (Gst.STATE.PAUSED, Gst.STATE.READY):
+             Gst.STATE.CHANGE_PAUSED_TO_READY,
+             (Gst.STATE.READY, Gst.STATE.NULL):
+             Gst.STATE.CHANGE_READY_TO_NULL}
     return table.get((old, new), 0)
 
 
 def flumotion_reset_event():
     ''' Helper method to create a 'flumotion-reset' event '''
-    return gst.event_new_custom(gst.EVENT_CUSTOM_DOWNSTREAM,
-                                gst.Structure('flumotion-reset'))
+    return Gst.event_new_custom(Gst.EVENT_CUSTOM_DOWNSTREAM,
+                                Gst.Structure('flumotion-reset'))
 
 
 def event_is_flumotion_reset(event):
@@ -203,13 +205,13 @@ class StateChangeMonitor(dict, log.Loggable):
     def have_error(self, curstate, message):
         # if we have a state change defer that has not yet
         # fired, we should errback it
-        changes = [gst.STATE_CHANGE_NULL_TO_READY,
-                   gst.STATE_CHANGE_READY_TO_PAUSED,
-                   gst.STATE_CHANGE_PAUSED_TO_PLAYING]
+        changes = [Gst.STATE.CHANGE_NULL_TO_READY,
+                   Gst.STATE.CHANGE_READY_TO_PAUSED,
+                   Gst.STATE.CHANGE_PAUSED_TO_PLAYING]
 
-        extras = ((gst.STATE_PAUSED, gst.STATE_CHANGE_PLAYING_TO_PAUSED),
-                  (gst.STATE_READY, gst.STATE_CHANGE_PAUSED_TO_READY),
-                  (gst.STATE_NULL, gst.STATE_CHANGE_READY_TO_NULL))
+        extras = ((Gst.STATE.PAUSED, Gst.STATE.CHANGE_PLAYING_TO_PAUSED),
+                  (Gst.STATE.READY, Gst.STATE.CHANGE_PAUSED_TO_READY),
+                  (Gst.STATE.NULL, Gst.STATE.CHANGE_READY_TO_NULL))
         for state, change in extras:
             if curstate <= state:
                 changes.append(change)
