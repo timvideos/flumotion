@@ -17,7 +17,9 @@
 
 import time
 
-import gst
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst
 
 from twisted.internet import reactor
 
@@ -147,7 +149,7 @@ class FeederClient:
         #timeAdded = stats[1]
         #timeRemoved = stats[2]
         #timeActive = stats[3]
-        timeLastActivity = float(stats[4]) / gst.SECOND
+        timeLastActivity = float(stats[4]) / Gst.SECOND
         if len(stats) > 5:
             # added in gst-plugins-base 0.10.11
             buffersDropped = stats[5]

@@ -23,7 +23,7 @@ from flumotion.common import errors
 
 import sys
 
-import gobject
+from gi.repository import GObject
 
 __version__ = "$Rev$"
 
@@ -36,7 +36,7 @@ def gobject_set_property(object, property, value):
     @type property: string
     @param value:   value to set property to
     """
-    for pspec in gobject.list_properties(object):
+    for pspec in GObject.list_properties(object):
         if pspec.name == property:
             break
     else:
@@ -44,8 +44,8 @@ def gobject_set_property(object, property, value):
             "Property '%s' in element '%s' does not exist" % (
                 property, object.get_property('name')))
 
-    if pspec.value_type in (gobject.TYPE_INT, gobject.TYPE_UINT,
-                            gobject.TYPE_INT64, gobject.TYPE_UINT64):
+    if pspec.value_type in (GObject.TYPE_INT, GObject.TYPE_UINT,
+                            GObject.TYPE_INT64, GObject.TYPE_UINT64):
         try:
             value = int(value)
         except ValueError:
@@ -53,16 +53,16 @@ def gobject_set_property(object, property, value):
                 property, object.get_property('name'))
             raise errors.PropertyError(msg)
 
-    elif pspec.value_type == gobject.TYPE_BOOLEAN:
+    elif pspec.value_type == GObject.TYPE_BOOLEAN:
         if value == 'False':
             value = False
         elif value == 'True':
             value = True
         else:
             value = bool(value)
-    elif pspec.value_type in (gobject.TYPE_DOUBLE, gobject.TYPE_FLOAT):
+    elif pspec.value_type in (GObject.TYPE_DOUBLE, GObject.TYPE_FLOAT):
         value = float(value)
-    elif pspec.value_type == gobject.TYPE_STRING:
+    elif pspec.value_type == GObject.TYPE_STRING:
         value = str(value)
     # FIXME: this is superevil ! we really need to find a better way
     # of checking if this property is a param enum
@@ -92,7 +92,7 @@ def gsignal(name, *args):
     else:
         _dict = _locals['__gsignals__']
 
-    _dict[name] = (gobject.SIGNAL_RUN_FIRST, None, args)
+    _dict[name] = (GObject.SIGNAL_RUN_FIRST, None, args)
 
 PARAM_CONSTRUCT = 1<<9
 
@@ -138,13 +138,13 @@ def gproperty(type_, name, desc, *args, **kwargs):
         if k == 'construct':
             flags |= PARAM_CONSTRUCT
         elif k == 'construct_only':
-            flags |= gobject.PARAM_CONSTRUCT_ONLY
+            flags |= GObject.PARAM_CONSTRUCT_ONLY
         elif k == 'readable':
-            flags |= gobject.PARAM_READABLE
+            flags |= GObject.PARAM_READABLE
         elif k == 'writable':
-            flags |= gobject.PARAM_WRITABLE
+            flags |= GObject.PARAM_WRITABLE
         elif k == 'lax_validation':
-            flags |= gobject.PARAM_LAX_VALIDATION
+            flags |= GObject.PARAM_LAX_VALIDATION
         else:
             raise Exception('Invalid GObject property flag: %r=%r' % (k, v))
 
@@ -155,4 +155,4 @@ def type_register(klass):
     if klass.__gtype__.pytype is not klass:
         # all subclasses will at least have a __gtype__ from their
         # parent, make sure it corresponds to the exact class
-        gobject.type_register(klass)
+        GObject.type_register(klass)

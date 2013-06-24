@@ -119,7 +119,7 @@ def element_factory_exists(name):
 
     @rtype: boolean
     """
-    registry = Gst.registry_get()
+    registry = Gst.Registry.get()
     factory = registry.find_feature(name, Gst.TYPE_ELEMENT_FACTORY)
 
     if factory:
@@ -135,7 +135,7 @@ def get_plugin_version(plugin_name):
     @rtype: tuple of (major, minor, micro, nano), or None if it could not be
             found or determined
     """
-    plugin = Gst.registry_get().find_plugin(plugin_name)
+    plugin = Gst.Registry.get().find_plugin(plugin_name)
 
     if not plugin:
         return None
@@ -149,18 +149,18 @@ def get_plugin_version(plugin_name):
 
 
 def get_state_change(old, new):
-    table = {(Gst.STATE.NULL, Gst.STATE.READY):
-             Gst.STATE.CHANGE_NULL_TO_READY,
-             (Gst.STATE.READY, Gst.STATE.PAUSED):
-             Gst.STATE.CHANGE_READY_TO_PAUSED,
-             (Gst.STATE.PAUSED, Gst.STATE.PLAYING):
-             Gst.STATE.CHANGE_PAUSED_TO_PLAYING,
-             (Gst.STATE.PLAYING, Gst.STATE.PAUSED):
-             Gst.STATE.CHANGE_PLAYING_TO_PAUSED,
-             (Gst.STATE.PAUSED, Gst.STATE.READY):
-             Gst.STATE.CHANGE_PAUSED_TO_READY,
-             (Gst.STATE.READY, Gst.STATE.NULL):
-             Gst.STATE.CHANGE_READY_TO_NULL}
+    table = {(Gst.State.NULL, Gst.State.READY):
+             Gst.State.CHANGE_NULL_TO_READY,
+             (Gst.State.READY, Gst.State.PAUSED):
+             Gst.State.CHANGE_READY_TO_PAUSED,
+             (Gst.State.PAUSED, Gst.State.PLAYING):
+             Gst.State.CHANGE_PAUSED_TO_PLAYING,
+             (Gst.State.PLAYING, Gst.State.PAUSED):
+             Gst.State.CHANGE_PLAYING_TO_PAUSED,
+             (Gst.State.PAUSED, Gst.State.READY):
+             Gst.State.CHANGE_PAUSED_TO_READY,
+             (Gst.State.READY, Gst.State.NULL):
+             Gst.State.CHANGE_READY_TO_NULL}
     return table.get((old, new), 0)
 
 
@@ -205,13 +205,13 @@ class StateChangeMonitor(dict, log.Loggable):
     def have_error(self, curstate, message):
         # if we have a state change defer that has not yet
         # fired, we should errback it
-        changes = [Gst.STATE.CHANGE_NULL_TO_READY,
-                   Gst.STATE.CHANGE_READY_TO_PAUSED,
-                   Gst.STATE.CHANGE_PAUSED_TO_PLAYING]
+        changes = [Gst.State.CHANGE_NULL_TO_READY,
+                   Gst.State.CHANGE_READY_TO_PAUSED,
+                   Gst.State.CHANGE_PAUSED_TO_PLAYING]
 
-        extras = ((Gst.STATE.PAUSED, Gst.STATE.CHANGE_PLAYING_TO_PAUSED),
-                  (Gst.STATE.READY, Gst.STATE.CHANGE_PAUSED_TO_READY),
-                  (Gst.STATE.NULL, Gst.STATE.CHANGE_READY_TO_NULL))
+        extras = ((Gst.State.PAUSED, Gst.State.CHANGE_PLAYING_TO_PAUSED),
+                  (Gst.State.READY, Gst.State.CHANGE_PAUSED_TO_READY),
+                  (Gst.State.NULL, Gst.State.CHANGE_READY_TO_NULL))
         for state, change in extras:
             if curstate <= state:
                 changes.append(change)

@@ -17,7 +17,10 @@
 
 import time
 
-import gst
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst
+
 from twisted.internet import reactor, defer
 
 from flumotion.common import log
@@ -111,7 +114,7 @@ class PadMonitor(log.Loggable):
             self._last_data_time = time.time()
 
             self.logMessage('buffer probe on %s has timestamp %s', self.name,
-                            gst.TIME_ARGS(buffer.timestamp))
+                            Gst.TIME_ARGS(buffer.timestamp))
 
             deferred, probe_id = self._probe_id.pop("id", (None, None))
             if probe_id:

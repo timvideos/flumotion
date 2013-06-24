@@ -15,32 +15,32 @@
 #
 # Headers in this file shall remain intact.
 
-#import os
+import os
 
-#import flumotion.common.setup
+import flumotion.common.setup
 # logging
-#flumotion.common.setup.setup()
+flumotion.common.setup.setup()
 
-#from flumotion.common import log
+from flumotion.common import log
 
 
-#def useGtk2Reactor():
-#    var = 'FLU_TEST_GTK2_REACTOR'
+def usePollReactor():
+    var = 'FLU_TEST_POLL_REACTOR'
 
-#    if var not in os.environ:
-#        return False
-#    else:
-#        return True
+    if var not in os.environ:
+        return False
+    else:
+        return True
 
-#if useGtk2Reactor():
-#    log.info('check', 'using gtk2 reactor')
-#    from twisted.internet import gtk2reactor
-#    gtk2reactor.install()
-#else:
-#    log.info('check', 'using default reactor')
+if usePollReactor():
+    log.info('check', 'using poll reactor')
+    from twisted.internet import pollreactor
+    pollreactor.install()
+else:
+    log.info('check', 'using default reactor')
 
 # have to choose the reactor before calling this method
-#log.logTwisted()
+log.logTwisted()
 
 # FIXME: boot.py does this, but enabling this borks
 # test_common_package.py. I have no idea what that code does, either.
@@ -58,11 +58,11 @@
 
 # fdpass is a built module,  so it lives in builddir, while the package
 # __init__ is in srcdir.  Append to its __path__ to make the tests work
-#i = os.getcwd().find('_build')
-#if i > -1:
-#    top_builddir = os.path.join(os.getcwd()[:i], '_build')
-#    from flumotion.extern import fdpass
-#    fdpass.__path__.append(os.path.join(top_builddir, 'flumotion', 'extern',
-#        'fdpass'))
+i = os.getcwd().find('_build')
+if i > -1:
+    top_builddir = os.path.join(os.getcwd()[:i], '_build')
+    from flumotion.extern import fdpass
+    fdpass.__path__.append(os.path.join(top_builddir, 'flumotion', 'extern',
+        'fdpass'))
 
-#del boot, flumotion, i, log, useGtk2Reactor
+del  flumotion, i, log, usePollReactor #,boot
