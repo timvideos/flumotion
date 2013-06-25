@@ -15,7 +15,9 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst
 
 from flumotion.common import gstreamer
 from flumotion.component import feedcomponent
@@ -84,10 +86,10 @@ class Vorbis(feedcomponent.EncoderComponent):
                         in_rate, maxsamplerate, self.bitrate, self.rate))
 
 
-            caps_str = 'audio/x-raw-float, rate=%d, channels=%d' % (self.rate,
+            caps_str = 'audio/x-raw, rate=%d, channels=%d' % (self.rate,
                         self.channels)
             cf.set_property('caps',
-                            gst.caps_from_string(caps_str))
+                            Gst.caps_from_string(caps_str))
             pad.remove_buffer_probe(handle)
             return True
 

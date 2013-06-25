@@ -17,7 +17,9 @@
 
 import time
 
-import gst
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst 
 
 from twisted.cred import credentials
 from twisted.internet import reactor, error, defer
@@ -405,7 +407,7 @@ class Streamer(feedcomponent.ParseLaunchComponent, Stats):
             self.resource.setLogFilter(logFilter)
 
         if 'timeout' in properties:
-            self.timeout = properties['timeout'] * gst.SECOND
+            self.timeout = properties['timeout'] * Gst.Second
 
         self.type = properties.get('type', 'master')
         if self.type == 'slave':

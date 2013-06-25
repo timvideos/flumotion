@@ -21,7 +21,9 @@ import errno
 import fcntl
 import string
 
-import gst
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst 
 
 from twisted.web import server, resource as web_resource
 from twisted.internet import reactor, defer
@@ -54,7 +56,7 @@ class MultiFdSinkStreamingResource(resources.HTTPStreamingResource,
     def _logWrite(self, request, stats):
         if stats:
             bytes_sent = stats[0]
-            time_connected = int(stats[3] / gst.SECOND)
+            time_connected = int(stats[3] / Gst.SECOND)
         else:
             bytes_sent = -1
             time_connected = -1

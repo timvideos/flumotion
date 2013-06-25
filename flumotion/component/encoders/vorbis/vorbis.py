@@ -15,7 +15,9 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst
 
 from vorbis010 import Vorbis
 

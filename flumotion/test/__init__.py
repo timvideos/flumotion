@@ -48,8 +48,8 @@ log.logTwisted()
 # # installing the reactor could override our packager's import hooks ...
 # from twisted.internet import reactor
 # # ... so we install them again here to be safe
-# from flumotion.common import package
-# package.getPackager().install()
+#from flumotion.common import package
+#package.getPackager().install()
 
 # make sure we have the right gst-python version
 #from flumotion.common import boot

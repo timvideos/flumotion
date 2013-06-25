@@ -15,7 +15,9 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst 
 
 from twisted.internet import reactor
 
@@ -72,19 +74,19 @@ class MultifdSinkStreamer(streamer.Streamer, Stats):
                 sink.set_property('sync-method', 4) # burst-keyframe
                 sink.set_property('burst-unit', 2) # time
                 sink.set_property('burst-value',
-                    long(self.burst_time * gst.SECOND))
+                    long(self.burst_time * Gst.Second))
 
                 # We also want to ensure that we have sufficient data available
                 # to satisfy this burst; and an appropriate maximum, all
                 # specified in units of time.
                 sink.set_property('time-min',
-                    long((self.burst_time + 5) * gst.SECOND))
+                    long((self.burst_time + 5) * Gst.Second))
 
                 sink.set_property('unit-type', 2) # time
                 sink.set_property('units-soft-max',
-                    long((self.burst_time + 8) * gst.SECOND))
+                    long((self.burst_time + 8) * Gst.Second))
                 sink.set_property('units-max',
-                    long((self.burst_time + 10) * gst.SECOND))
+                    long((self.burst_time + 10) * Gst.Second))
             elif self.burst_size:
                 self.debug("Configuring burst mode for %d kB burst",
                     self.burst_size)

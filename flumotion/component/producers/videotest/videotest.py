@@ -15,7 +15,9 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst
 
 from flumotion.common import errors, gstreamer, messages
 from flumotion.common.i18n import N_, gettexter
@@ -45,25 +47,25 @@ class VideoTest(feedcomponent.ParseLaunchComponent):
             capsString = '%s,format=(fourcc)I420' % capsString
 
         # Filtered caps
-        struct = gst.structure_from_string(capsString)
+        struct = Gst.structure_from_string(capsString)
         for k in 'width', 'height':
             if k in properties:
                 struct[k] = properties[k]
 
         if 'framerate' in properties:
             framerate = properties['framerate']
-            struct['framerate'] = gst.Fraction(framerate[0], framerate[1])
+            struct['framerate'] = Gst.Fraction(framerate[0], framerate[1])
 
         # always set par
-        struct['pixel-aspect-ratio']= gst.Fraction(1, 1)
+        struct['pixel-aspect-ratio']= Gst.Fraction(1, 1)
         if 'pixel-aspect-ratio' in properties:
             par = properties['pixel-aspect-ratio']
-            struct['pixel-aspect-ratio'] = gst.Fraction(par[0], par[1])
+            struct['pixel-aspect-ratio'] = Gst.Fraction(par[0], par[1])
 
         # If RGB, set something ffmpegcolorspace can convert.
         if capsString == 'video/x-raw-rgb':
             struct['red_mask'] = 0xff00
-        caps = gst.Caps(struct)
+        caps = Gst.Caps(struct)
 
         is_live = 'is-live=true'
 
