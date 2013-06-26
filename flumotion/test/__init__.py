@@ -25,7 +25,7 @@ from flumotion.common import log
 
 
 def useGtk3Reactor():
-    var = 'FLU_TEST_POLL_REACTOR'
+    var = 'FLU_TEST_GTK3_REACTOR'
 
     if var not in os.environ:
         return False
@@ -33,7 +33,7 @@ def useGtk3Reactor():
         return True
 
 if useGtk3Reactor():
-    log.info('check', 'using poll reactor')
+    log.info('check', 'using gtk3 reactor')
     from twisted.internet import gtk3reactor
     gtk3reactor.install()
 else:
