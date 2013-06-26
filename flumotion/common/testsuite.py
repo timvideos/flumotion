@@ -19,7 +19,7 @@
 """
 
 from twisted.spread import pb
-from twisted.internet import reactor, defer, selectreactor, pollreactor
+from twisted.internet import reactor, defer, selectreactor, pollreactor, gtk3reactor
 from twisted.scripts import trial
 from twisted.trial import unittest, util
 
@@ -57,7 +57,7 @@ class TestCase(unittest.TestCase, log.Loggable):
     # A sequence of reactors classes that this test supports, can be
     # overridden in subclasses. You can also set this to an empty
     # sequence, which means "any reactor"
-    supportedReactors = [selectreactor.SelectReactor, pollreactor.PollReactor]
+    supportedReactors = [selectreactor.SelectReactor, pollreactor.PollReactor, gtk3reactor.Gtk3Reactor]
 
     # TestCase in Twisted 2.0 doesn't define failUnlessFailure method.
     if not hasattr(unittest.TestCase, 'failUnlessFailure'):
