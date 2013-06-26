@@ -24,7 +24,7 @@ flumotion.common.setup.setup()
 from flumotion.common import log
 
 
-def usePollReactor():
+def useGtk3Reactor():
     var = 'FLU_TEST_POLL_REACTOR'
 
     if var not in os.environ:
@@ -32,10 +32,10 @@ def usePollReactor():
     else:
         return True
 
-if usePollReactor():
+if useGtk3Reactor():
     log.info('check', 'using poll reactor')
-    from twisted.internet import pollreactor
-    pollreactor.install()
+    from twisted.internet import gtk3reactor
+    gtk3reactor.install()
 else:
     log.info('check', 'using default reactor')
 
@@ -65,4 +65,4 @@ if i > -1:
     fdpass.__path__.append(os.path.join(top_builddir, 'flumotion', 'extern',
         'fdpass'))
 
-del  flumotion, i, log, usePollReactor #,boot
+del  flumotion, i, log, useGtk3Reactor #,boot

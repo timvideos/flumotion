@@ -277,7 +277,7 @@ class Streamer(feedcomponent.ParseLaunchComponent, Stats):
         self.burst_on_connect = False
         self.timeout = 0L
 
-        self.description = None
+        self.description = "Flumotion Stream"
 
         self.type = None
 
@@ -451,7 +451,7 @@ class Streamer(feedcomponent.ParseLaunchComponent, Stats):
         else:
             port_str = ":%d" % port
 
-        return "http://%s%s%s" % (self.hostname, port_str, self.mountPoint)
+        return "http://%s%s%s" % ("localhost", port_str, self.mountPoint)
 
     def getStreamData(self):
         socket = 'flumotion.component.plugs.streamdata.StreamDataProviderPlug'
