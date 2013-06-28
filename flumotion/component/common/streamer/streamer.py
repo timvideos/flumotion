@@ -338,10 +338,10 @@ class Streamer(feedcomponent.ParseLaunchComponent, Stats):
         if not mountPoint.startswith('/'):
             mountPoint = '/' + mountPoint
         self.mountPoint = mountPoint
-
         # Hostname is used for a variety of purposes. We do a best-effort guess
         # where nothing else is possible, but it's much preferable to just
         # configure this
+
         self.hostname = properties.get('hostname', None)
         self.iface = self.hostname # We listen on this if explicitly
                                    # configured, but not if it's only guessed
@@ -440,7 +440,6 @@ class Streamer(feedcomponent.ParseLaunchComponent, Stats):
 
     def getUrl(self):
         port = self.port
-
         if self.type == 'slave' and self._pbclient:
             if not self._pbclient.remote_port:
                 return ""
@@ -450,8 +449,7 @@ class Streamer(feedcomponent.ParseLaunchComponent, Stats):
             port_str = ""
         else:
             port_str = ":%d" % port
-
-        return "http://%s%s%s" % ("localhost", port_str, self.mountPoint)
+        return "http://%s%s%s" % (self.hostname, port_str, self.mountPoint)
 
     def getStreamData(self):
         socket = 'flumotion.component.plugs.streamdata.StreamDataProviderPlug'

@@ -74,19 +74,19 @@ class MultifdSinkStreamer(streamer.Streamer, Stats):
                 sink.set_property('sync-method', 4) # burst-keyframe
                 sink.set_property('burst-unit', 2) # time
                 sink.set_property('burst-value',
-                    long(self.burst_time * Gst.Second))
+                    long(self.burst_time * Gst.SECOND))
 
                 # We also want to ensure that we have sufficient data available
                 # to satisfy this burst; and an appropriate maximum, all
                 # specified in units of time.
                 sink.set_property('time-min',
-                    long((self.burst_time + 5) * Gst.Second))
+                    long((self.burst_time + 5) * Gst.SECOND))
 
                 sink.set_property('unit-type', 2) # time
                 sink.set_property('units-soft-max',
-                    long((self.burst_time + 8) * Gst.Second))
+                    long((self.burst_time + 8) * Gst.SECOND))
                 sink.set_property('units-max',
-                    long((self.burst_time + 10) * Gst.Second))
+                    long((self.burst_time + 10) * Gst.SECOND))
             elif self.burst_size:
                 self.debug("Configuring burst mode for %d kB burst",
                     self.burst_size)
@@ -158,6 +158,7 @@ class MultifdSinkStreamer(streamer.Streamer, Stats):
         sink.connect('client-removed', self._client_removed_cb)
 
         sink.caps = None
+
 
     def check_properties(self, props, addMessage):
         streamer.Streamer.check_properties(self, props, addMessage)
