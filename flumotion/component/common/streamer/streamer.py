@@ -341,7 +341,6 @@ class Streamer(feedcomponent.ParseLaunchComponent, Stats):
         # Hostname is used for a variety of purposes. We do a best-effort guess
         # where nothing else is possible, but it's much preferable to just
         # configure this
-
         self.hostname = properties.get('hostname', None)
         self.iface = self.hostname # We listen on this if explicitly
                                    # configured, but not if it's only guessed

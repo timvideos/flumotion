@@ -56,7 +56,7 @@ class MultiFdSinkStreamingResource(resources.HTTPStreamingResource,
     def _logWrite(self, request, stats):
         if stats:
             bytes_sent = stats[0]
-            time_connected = int(stats[3] / Gst.Second)
+            time_connected = int(stats[3] / Gst.SECOND)
         else:
             bytes_sent = -1
             time_connected = -1
