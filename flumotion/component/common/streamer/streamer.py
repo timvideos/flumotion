@@ -355,7 +355,6 @@ class Streamer(feedcomponent.ParseLaunchComponent, Stats):
             self.description = "Flumotion Stream"
 
         # check how to set client sync mode
-
         if 'client-limit' in properties:
             limit = int(properties['client-limit'])
             self.resource.setUserLimit(limit)

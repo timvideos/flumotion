@@ -28,7 +28,7 @@ CONFIG = {
     'parent': 'default',
     'eater': {'default': [('muxer-video:default', 'default')]},
     'source': ['muxer-video:default'],
-    #'avatarId': '/default/http-video',
+    'avatarId': '/default/http-video',
     'clock-master': None,
     'plugs': {
         'flumotion.component.plugs.streamdata.StreamDataProviderPlug': [],
@@ -49,6 +49,8 @@ class StreamerTestCase(testsuite.TestCase):
         config = self.getConfig()
         config['properties'] = self.properties.copy()
         self.component = httpstreamer.MultifdSinkStreamer(config)
+        self.component.configure_auth_and_resource()
+        self.component.parseProperties(config)
 
     def tearDown(self):
         return self.component.stop()
@@ -62,7 +64,6 @@ class TestStreamDataNoPlug(StreamerTestCase):
 
 
     def testGetStreamData(self):
-        self.component.parseProperties({})
         streamData = self.component.getStreamData()
         # there's no plug, so we get defaults
         self.assertEquals(streamData['protocol'], 'HTTP')
