@@ -22,7 +22,6 @@
 from flumotion.common import errors
 
 import sys
-
 from gi.repository import GObject
 
 __version__ = "$Rev$"

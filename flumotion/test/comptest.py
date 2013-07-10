@@ -19,7 +19,7 @@ import new
 import os
 
 from twisted.python import failure
-from twisted.internet import reactor, defer, interfaces, gtk2reactor
+from twisted.internet import reactor, defer, interfaces, gtk3reactor
 
 from flumotion.common import registry, log, testsuite, common
 from flumotion.common.planet import moods
@@ -80,7 +80,7 @@ def call_and_passthru_callback(result, callable_, *args, **kwargs):
 
 
 class CompTestTestCase(testsuite.TestCase):
-    supportedReactors = [gtk2reactor.Gtk2Reactor]
+    supportedReactors = [gtk3reactor.Gtk3Reactor]
 
     logCategory = 'comptest-test'
 

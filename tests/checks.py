@@ -35,8 +35,8 @@ import gst
 
 import debugslider
 
-from twisted.internet import gtk2reactor
-gtk2reactor.install(useGtk=False)
+from twisted.internet import gtk3reactor
+gtk3reactor.install(useGtk=False)
 from twisted.internet import reactor
 
 

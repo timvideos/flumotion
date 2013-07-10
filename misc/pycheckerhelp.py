@@ -10,8 +10,8 @@ import gst
 import gst.interfaces
 e = gst.element_factory_make('fakesrc')
 
-from twisted.internet import gtk2reactor
-gtk2reactor.install(useGtk=True)
+from twisted.internet import gtk3reactor
+gtk3reactor.install(useGtk=True)
 
 import pyexpat
 

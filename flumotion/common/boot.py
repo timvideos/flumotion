@@ -19,12 +19,11 @@
 
 import os
 import sys
-
 from flumotion.common.log import safeprintf
 
 __version__ = "$Rev$"
 # Keep in sync with configure.ac
-PYGTK_REQ = (2, 10, 0)
+#PYGTK_REQ = (2, 10, 0)
 KIWI_REQ = (1, 9, 13)
 GST_REQ = {'0.10': {'gstreamer': (0, 10, 10),
                     'gst-python': (0, 10, 4)}}
@@ -39,18 +38,18 @@ def init_gobject():
     SystemExit exception to be raised.
     """
     try:
-        import pygtk
-        pygtk.require('2.0')
+        #import pygtk
+        #pygtk.require('2.0')
 
-        import gobject
+        from gi.repository import GObject
     except ImportError:
         raise SystemExit('ERROR: PyGTK could not be found')
 
-    if gobject.pygtk_version < PYGTK_REQ:
-        raise SystemExit('ERROR: PyGTK %s or higher is required'
-                         % '.'.join(map(str, PYGTK_REQ)))
+    #if GObject.pygtk_version < PYGTK_REQ:
+    #    raise SystemExit('ERROR: PyGTK %s or higher is required'
+    #                     % '.'.join(map(str, PYGTK_REQ)))
 
-    gobject.threads_init()
+    GObject.threads_init()
 
 
 def _init_gst_version(gst_majorminor):
@@ -62,40 +61,40 @@ def _init_gst_version(gst_majorminor):
         raise SystemExit('ERROR: Invalid FLU_GST_VERSION: %r (expected '
                          'one of %r)' % (gst_majorminor, GST_REQ.keys()))
 
-    pygst_req = GST_REQ[gst_majorminor]['gst-python']
+    #pygst_req = GST_REQ[gst_majorminor]['gst-python']
     gst_req = GST_REQ[gst_majorminor]['gstreamer']
 
     try:
-        import pygst
-        pygst.require(gst_majorminor)
-        import gst
+        #import pygst
+        #pygst.require(gst_majorminor)
+        from gi.repository import Gst
     except ImportError:
         return False
     except AssertionError:
         return False
 
     try:
-        gst_version = gst.get_gst_version()
-        pygst_version = gst.get_pygst_version()
+        gst_version = Gst.gst_version()
+        #pygst_version = Gst.get_pygst_version()
     except AttributeError:
         # get_foo_version() added in 0.10.4, fall back
-        gst_version = gst.gst_version
-        pygst_version = gst.pygst_version
+        gst_version = Gst.version
+        #pygst_version = Gst.pygst_version
 
-    if gst_req[:2] != gst_version[:2]:
-        raise SystemExit(
-            'ERROR: Expected GStreamer %s, but got incompatible %s'
-            % (gst_majorminor, tup2version(gst_version[:2])))
+    #if gst_req[:2] != gst_version[:2]:
+    #    raise SystemExit(
+    #        'ERROR: Expected GStreamer %s, but got incompatible %s'
+    #        % (gst_majorminor, tup2version(gst_version[:2])))
 
-    if gst_version < gst_req:
-        raise SystemExit(
-            'ERROR: GStreamer %s too old; install %s or newer'
-            % (tup2version(gst_version), tup2version(gst_req)))
+   # if gst_version < gst_req:
+   #     raise SystemExit(
+   #         'ERROR: GStreamer %s too old; install %s or newer'
+   #         % (tup2version(gst_version), tup2version(gst_req)))
 
-    if pygst_version < pygst_req:
-        raise SystemExit(
-            'ERROR: gst-python %s too old; install %s or newer'
-            % (tup2version(pygst_version), tup2version(pygst_req)))
+    #if pygst_version < pygst_req:
+    #    raise SystemExit(
+    #        'ERROR: gst-python %s too old; install %s or newer'
+    #        % (tup2version(pygst_version), tup2version(pygst_req)))
 
     return True
 
@@ -105,7 +104,7 @@ def init_gst():
     Initialize pygst. A missing or too-old pygst will cause a
     SystemExit exception to be raised.
     """
-    assert 'gobject' in sys.modules, "Run init_gobject() first"
+    assert 'gi.repository.GObject' in sys.modules, "Run init_gobject() first"
 
     gst_majorminor = os.getenv('FLU_GST_VERSION')
 
@@ -129,7 +128,7 @@ def init_gst():
 
 
 def init_kiwi():
-    import gobject
+    from gi.repository import GObject
 
     try:
         from kiwi.__version__ import version as kiwi_version
@@ -139,12 +138,12 @@ def init_kiwi():
     if kiwi_version < KIWI_REQ:
         raise SystemExit('ERROR: Kiwi %s or higher is required'
                          % '.'.join(map(str, KIWI_REQ)))
-    elif gobject.pygobject_version > (2, 26, 0):
+    elif GObject.pygobject_version > (2, 26, 0):
         # Kiwi is not compatible yet with the changes introduced in
         # http://git.gnome.org/browse/pygobject/commit/?id=84d614
         # Basically, what we do is to revert the changes in _type_register of
         # GObjectMeta at least until kiwi works properly with new pygobject
-        from gobject._gobject import type_register
+        from GObject._gobject import type_register
 
         def _type_register(cls, namespace):
             ## don't register the class if already registered
@@ -163,23 +162,23 @@ def init_kiwi():
 
             type_register(cls, namespace.get('__gtype_name__'))
 
-        gobject.GObjectMeta._type_register = _type_register
+        GObject.GObjectMeta._type_register = _type_register
 
     return True
 
 
-def init_option_parser(gtk, gst):
+def init_option_parser(Gst):
     # We should only use the GOption parser if we are already going to
     # import gobject, and if we can find a recent enough version of
     # pygobject on our system. There were bugs in the GOption parsing
     # until pygobject 2.15.0, so just revert to optparse if our
     # pygobject is too old.
     global USE_GOPTION_PARSER
-    if not gtk and not gst:
+    if not Gst:
         USE_GOPTION_PARSER = False
     else:
-        import gobject
-        if getattr(gobject, 'pygobject_version', ()) >= (2, 15, 0):
+        from gi.repository import GObject
+        if getattr(GObject, 'pygobject_version', ()) >= (2, 15, 0):
             USE_GOPTION_PARSER = True
         else:
             USE_GOPTION_PARSER = False
@@ -257,13 +256,13 @@ def boot(path, gtk=False, gst=True, installReactor=True):
     global USE_GTK, USE_GST
     USE_GTK=gtk
     USE_GST=gst
-    init_option_parser(gtk, gst)
+    init_option_parser(gst)
 
     # installing the reactor could override our packager's import hooks ...
     if installReactor:
-        from twisted.internet import gtk2reactor
+        from twisted.internet import gtk3reactor
         try:
-            gtk2reactor.install(useGtk=gtk)
+            gtk3reactor.install()
         except RuntimeError, e:
             safeprintf(sys.stderr, 'ERROR: %s\n', e)
             sys.exit(1)
