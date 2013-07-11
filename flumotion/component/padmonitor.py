@@ -93,7 +93,7 @@ class PadMonitor(log.Loggable):
         # actually return
         d, probe_id = self._probe_id.pop("id", (None, None))
         if probe_id:
-            self._pad.remove_buffer_probe(probe_id)
+            self._pad.remove_probe(probe_id)
             d.callback(None)
 
     def _probe_timeout(self):
@@ -119,7 +119,7 @@ class PadMonitor(log.Loggable):
             deferred, probe_id = self._probe_id.pop("id", (None, None))
             if probe_id:
                 # This will be None only if detach() has been called.
-                self._pad.remove_buffer_probe(probe_id)
+                self._pad.remove_probe(probe_id)
 
                 reactor.callFromThread(deferred.callback, None)
                 # Data received! Return to happy ASAP:
@@ -133,7 +133,7 @@ class PadMonitor(log.Loggable):
         d = defer.Deferred()
         # FIXME: this is racy: evaluate RHS, drop GIL, buffer probe
         # fires before __setitem__ in LHS; need a mutex
-        self._probe_id['id'] = (d, self._pad.add_buffer_probe(probe_cb))
+        self._probe_id['id'] = (d, self._pad.add_probe(Gst.PadProbeType.BUFFER, probe_cb, "user data"))
         return d
 
     def _check_timeout(self):

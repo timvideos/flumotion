@@ -65,7 +65,7 @@ class Vorbis(feedcomponent.EncoderComponent):
         else:
             enc.set_property('quality', self.quality)
 
-        pad = ar.get_pad('sink')
+        pad = ar.get_static_pad('sink')
         handle = None
 
         def buffer_probe(pad, buffer):
@@ -90,10 +90,10 @@ class Vorbis(feedcomponent.EncoderComponent):
                         self.channels)
             cf.set_property('caps',
                             Gst.caps_from_string(caps_str))
-            pad.remove_buffer_probe(handle)
+            pad.remove_probe(handle)
             return True
 
-        handle = pad.add_buffer_probe(buffer_probe)
+        handle = pad.add_probe(Gst.PadProbeType.BUFFER, buffer_probe,  "user data")
 
     def modify_property_Bitrate(self, value):
         if not self.checkPropertyType('bitrate', value, int):

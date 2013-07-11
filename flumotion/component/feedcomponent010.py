@@ -17,7 +17,7 @@
 
 import gi
 gi.require_version('Gst', '1.0')
-from gi.repository import GObject, Gst
+from gi.repository import GObject, Gst, GstNet
 
 import os
 import time
@@ -129,7 +129,7 @@ class FeedComponent(basecomponent.BaseComponent):
         self.try_start_pipeline()
 
         # no race, messages marshalled asynchronously via the bus
-        d = self._change_monitor.add(Gst.State.CHANGE_PAUSED_TO_PLAYING)
+        d = self._change_monitor.add(Gst.StateChange.PAUSED_TO_PLAYING)
         d.addCallback(lambda x: self.do_pipeline_playing())
 
     def setup_completed(self):
@@ -164,7 +164,7 @@ class FeedComponent(basecomponent.BaseComponent):
         if not element:
             raise errors.ComponentError("No such feeder %s" % feederName)
 
-        pad = element.get_pad('src')
+        pad = element.get_static_pad('src')
         self._pad_monitors.attach(pad, "%s:%s" % (self.name, elementName))
 
     def attachPadMonitorToElement(self, elementName,
@@ -172,7 +172,7 @@ class FeedComponent(basecomponent.BaseComponent):
         element = self.pipeline.get_by_name(elementName)
         if not element:
             raise errors.ComponentError("No such element %s" % elementName)
-        pad = element.get_pad('src')
+        pad = element.get_static_pad('src')
         name = "%s:%s" % (self.name, elementName)
         self._pad_monitors.attach(pad, name)
 
@@ -284,9 +284,9 @@ class FeedComponent(basecomponent.BaseComponent):
         def default():
             self.log('message received: %r', message)
 
-        handlers = {Gst.MESSAGE_STATE_CHANGED: state_changed,
-                    Gst.MESSAGE_ERROR: error,
-                    Gst.MESSAGE_EOS: eos}
+        handlers = {Gst.MessageType.STATE_CHANGED: state_changed,
+                    Gst.MessageType.ERROR: error,
+                    Gst.MessageType.EOS: eos}
         t = message.type
         src = message.src
         handlers.get(t, default)()
@@ -392,9 +392,9 @@ class FeedComponent(basecomponent.BaseComponent):
 
         self.debug('adding event probe for eater %s', eater.eaterAlias)
         fdsrc = self.get_element(eater.elementName)
-        fdsrc.get_pad("src").add_event_probe(fdsrc_event)
+        fdsrc.get_static_pad("src").add_probe(Gst.PadProbeType.EVENT_BOTH,fdsrc_event,"user data")
         depay = self.get_element(eater.depayName)
-        depay.get_pad("src").add_event_probe(depay_event)
+        depay.get_static_pad("src").add_probe(Gst.PadProbeType.EVENT_BOTH,depay_event,"user data")
 
     def _setup_pipeline(self):
         self.debug('setup_pipeline()')
@@ -432,7 +432,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
         for eater in self.eaters.values():
             self.install_eater_event_probes(eater)
-            pad = self.get_element(eater.elementName).get_pad('src')
+            pad = self.get_element(eater.elementName).get_static_pad('src')
             name = "%s:%s" % (self.name, eater.elementName)
             self._pad_monitors.attach(pad, name,
                                       padmonitor.EaterPadMonitor,
@@ -527,7 +527,7 @@ class FeedComponent(basecomponent.BaseComponent):
             # make sure the pipeline sticks with this clock
             self.pipeline.use_clock(clock)
 
-            self.clock_provider = Gst.NetTimeProvider(clock, None, port)
+            self.clock_provider = GstNet.NetTimeProvider(clock, None, port)
             realport = self.clock_provider.get_property('port')
 
             base_time = self.pipeline.get_base_time()
@@ -551,7 +551,7 @@ class FeedComponent(basecomponent.BaseComponent):
         (ret, state, pending) = self.pipeline.get_state(0)
         if state != Gst.State.PAUSED and state != Gst.State.PLAYING:
             self.debug("pipeline still spinning up: %r", state)
-            d = self._change_monitor.add(Gst.State.CHANGE_READY_TO_PAUSED)
+            d = self._change_monitor.add(Gst.StateChange.READY_TO_PAUSED)
             d.addCallback(pipelinePaused)
             return d
         elif self.clock_provider:
@@ -696,7 +696,7 @@ class FeedComponent(basecomponent.BaseComponent):
         def drop_stream_headers(pad, buf):
             if buf.flag_is_set(Gst.BUFFER_FLAG_IN_CAPS):
                 return False
-            pad.remove_buffer_probe(probes[pad])
+            pad.remove_probe(probes[pad])
             return True
 
         probes = {}
@@ -742,7 +742,7 @@ class FeedComponent(basecomponent.BaseComponent):
         # re-sending the headers again)
         else:
             for pad in src_pads:
-                probes[pad] = pad.add_buffer_probe(drop_stream_headers)
+                probes[pad] = pad.add_probe(Gst.PadProbeType.BUFFER,drop_stream_headers,"user data")
 
         if state > mutable_state:
             element.set_state(state)
@@ -864,7 +864,7 @@ class FeedComponent(basecomponent.BaseComponent):
             # To do this safely, we first block fdsrc:src, then let the
             # component do any neccesary unlocking (needed for multi-input
             # elements)
-            srcpad = element.get_pad('src')
+            srcpad = element.get_static_pad('src')
 
             def _block_cb(pad, blocked):
                 pass
@@ -888,7 +888,7 @@ class FeedComponent(basecomponent.BaseComponent):
                 if eater.streamheaderBufferProbeHandler:
                     self.log("Removing buffer probe on depay src pad on "
                              "eater %r", eater)
-                    pad.remove_buffer_probe(
+                    pad.remove_probe(
                         eater.streamheaderBufferProbeHandler)
                     eater.streamheaderBufferProbeHandler = None
                 else:
@@ -905,8 +905,8 @@ class FeedComponent(basecomponent.BaseComponent):
                     self.log("Adding buffer probe on depay src pad on "
                              "eater %r", eater)
                     eater.streamheaderBufferProbeHandler = \
-                            depay.get_pad("src").add_buffer_probe(
-                                remove_in_caps_buffers, eater)
+                            depay.get_static_pad("src").add_probe(
+                                Gst.PadProbeType.BUFFER, remove_in_caps_buffers, eater)
 
             self.unblock_eater(eaterAlias)
 

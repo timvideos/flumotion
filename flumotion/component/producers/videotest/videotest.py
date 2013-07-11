@@ -41,9 +41,9 @@ class VideoTest(feedcomponent.ParseLaunchComponent):
         self.uiState.addKey('pattern', 0)
 
     def get_pipeline_string(self, properties):
-        capsString = properties.get('format', 'video/x-raw-yuv')
+        capsString = properties.get('format', 'video/x-raw')
 
-        if capsString == 'video/x-raw-yuv':
+        if capsString == 'video/x-raw':
             capsString = '%s,format=(fourcc)I420' % capsString
 
         # Filtered caps
@@ -62,8 +62,8 @@ class VideoTest(feedcomponent.ParseLaunchComponent):
             par = properties['pixel-aspect-ratio']
             struct['pixel-aspect-ratio'] = Gst.Fraction(par[0], par[1])
 
-        # If RGB, set something ffmpegcolorspace can convert.
-        if capsString == 'video/x-raw-rgb':
+        # If RGB, set something videoconvert can convert.
+        if capsString == 'video/x-raw':
             struct['red_mask'] = 0xff00
         caps = Gst.Caps(struct)
 

@@ -46,7 +46,7 @@ class Theora(feedcomponent.EncoderComponent):
             raise errors.ConfigError(msg)
 
     def get_pipeline_string(self, properties):
-        return "ffmpegcolorspace ! theoraenc name=encoder"
+        return "videoconvert ! theoraenc name=encoder"
 
     def configure_pipeline(self, pipeline, properties):
         element = pipeline.get_by_name('encoder')

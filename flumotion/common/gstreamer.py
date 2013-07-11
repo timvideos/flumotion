@@ -120,7 +120,7 @@ def element_factory_exists(name):
     @rtype: boolean
     """
     registry = Gst.Registry.get()
-    factory = registry.find_feature(name, Gst.TYPE_ELEMENT_FACTORY)
+    factory = registry.lookup_feature(name)
 
     if factory:
         return True
@@ -150,17 +150,17 @@ def get_plugin_version(plugin_name):
 
 def get_state_change(old, new):
     table = {(Gst.State.NULL, Gst.State.READY):
-             Gst.State.CHANGE_NULL_TO_READY,
+             Gst.StateChange.NULL_TO_READY,
              (Gst.State.READY, Gst.State.PAUSED):
-             Gst.State.CHANGE_READY_TO_PAUSED,
+             Gst.StateChange.READY_TO_PAUSED,
              (Gst.State.PAUSED, Gst.State.PLAYING):
-             Gst.State.CHANGE_PAUSED_TO_PLAYING,
+             Gst.StateChange.PAUSED_TO_PLAYING,
              (Gst.State.PLAYING, Gst.State.PAUSED):
-             Gst.State.CHANGE_PLAYING_TO_PAUSED,
+             Gst.StateChange.PLAYING_TO_PAUSED,
              (Gst.State.PAUSED, Gst.State.READY):
-             Gst.State.CHANGE_PAUSED_TO_READY,
+             Gst.StateChange.PAUSED_TO_READY,
              (Gst.State.READY, Gst.State.NULL):
-             Gst.State.CHANGE_READY_TO_NULL}
+             Gst.StateChange.READY_TO_NULL}
     return table.get((old, new), 0)
 
 
@@ -205,13 +205,13 @@ class StateChangeMonitor(dict, log.Loggable):
     def have_error(self, curstate, message):
         # if we have a state change defer that has not yet
         # fired, we should errback it
-        changes = [Gst.State.CHANGE_NULL_TO_READY,
-                   Gst.State.CHANGE_READY_TO_PAUSED,
-                   Gst.State.CHANGE_PAUSED_TO_PLAYING]
+        changes = [Gst.StateChange.NULL_TO_READY,
+                   Gst.StateChange.READY_TO_PAUSED,
+                   Gst.StateChange.PAUSED_TO_PLAYING]
 
-        extras = ((Gst.State.PAUSED, Gst.State.CHANGE_PLAYING_TO_PAUSED),
-                  (Gst.State.READY, Gst.State.CHANGE_PAUSED_TO_READY),
-                  (Gst.State.NULL, Gst.State.CHANGE_READY_TO_NULL))
+        extras = ((Gst.State.PAUSED, Gst.StateChange.PLAYING_TO_PAUSED),
+                  (Gst.State.READY, Gst.StateChange.PAUSED_TO_READY),
+                  (Gst.State.NULL, Gst.StateChange.READY_TO_NULL))
         for state, change in extras:
             if curstate <= state:
                 changes.append(change)

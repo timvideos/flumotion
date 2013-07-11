@@ -76,7 +76,7 @@ class AudioTest(feedcomponent.ParseLaunchComponent):
 
         return ('%s name=source wave=%s %s ! ' \
             'identity name=identity silent=TRUE ! ' \
-            'audio/x-raw-int,rate=%d ! ' \
+            'audio/x-raw,rate=%d ! ' \
             'volume name=volume volume=%f ! level name=level'
                 % (source, wave, is_live, samplerate, volume))
 
