@@ -93,7 +93,7 @@ class Vorbis(feedcomponent.EncoderComponent):
             pad.remove_probe(handle)
             return True
 
-        handle = pad.add_probe(Gst.PadProbeType.BUFFER, buffer_probe,  "user data")
+        handle = pad.add_probe(Gst.PadProbeType.BUFFER, buffer_probe,  None)
 
     def modify_property_Bitrate(self, value):
         if not self.checkPropertyType('bitrate', value, int):

@@ -17,7 +17,9 @@
 
 import gi
 gi.require_version('Gst', '1.0')
-from gi.repository import GObject, Gst, GstNet
+gi.require_version('GstNet', '1.0')
+from gi.repository import GObject, Gst
+from gi.repository import GstNet
 
 import os
 import time
@@ -527,7 +529,7 @@ class FeedComponent(basecomponent.BaseComponent):
             # make sure the pipeline sticks with this clock
             self.pipeline.use_clock(clock)
 
-            self.clock_provider = GstNet.NetTimeProvider(clock, None, port)
+            self.clock_provider = GstNet.NetTimeProvider.new(clock, None, port)
             realport = self.clock_provider.get_property('port')
 
             base_time = self.pipeline.get_base_time()
