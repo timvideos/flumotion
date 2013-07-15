@@ -253,6 +253,9 @@ def boot(path, gtk=False, gst=True, installReactor=True):
         from flumotion.configure import configure
         configure.gst_version = init_gst()
 
+    from gi.repository import GstNet
+    assert 'gi.repository.GstNet' in sys.modules
+
     global USE_GTK, USE_GST
     USE_GTK=gtk
     USE_GST=gst

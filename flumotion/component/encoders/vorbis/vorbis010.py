@@ -68,9 +68,9 @@ class Vorbis(feedcomponent.EncoderComponent):
         pad = ar.get_static_pad('sink')
         handle = None
 
-        def buffer_probe(pad, buffer):
+        def buffer_probe(pad, buffer, banana):
             # this comes from another thread
-            caps = buffer.get_caps()
+            caps = pad.query_caps(None).to_string()
             in_rate = caps[0]['rate']
 
             # now do necessary filtercaps

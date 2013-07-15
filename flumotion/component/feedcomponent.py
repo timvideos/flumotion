@@ -802,7 +802,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
 
         for elem in self.get_output_elements():
             self.debug('RESET: adding event probe for %s', elem.get_name())
-            elem.get_static_pad('sink').add_event_probe(output_reset_event)
+            elem.get_static_pad('sink').add_probe(Gst.PadProbeType.EVENT_BOTH, output_reset_event, None)
 
     def _block_eaters(self):
         """
@@ -958,7 +958,7 @@ class EncoderComponent(ParseLaunchComponent):
         ParseLaunchComponent.setup_completed(self)
 
         encoder = self.get_element('encoder')
-        encoder.get_static_pad('sink').add_event_probe(self.handle_reset_event)
+        encoder.get_static_pad('sink').add_probe(Gst.PadProbeType.EVENT_BOTH,self.handle_reset_event, None)
 
     def handle_reset_event(self, pad, event):
         if gstreamer.event_is_flumotion_reset(event):

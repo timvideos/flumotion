@@ -19,8 +19,10 @@ import gi
 gi.require_version('Gst', '1.0')
 gi.require_version('GstNet', '1.0')
 from gi.repository import GObject, Gst
+#import pprint
+import sys
+#pprint.pprint(sys.modules)
 from gi.repository import GstNet
-
 import os
 import time
 
@@ -251,8 +253,8 @@ class FeedComponent(basecomponent.BaseComponent):
                 old, new, pending = message.parse_state_changed()
                 self._change_monitor.state_changed(old, new)
                 dump_filename = "%s.%s_%s" % (self.name,
-                    Gst.element_state_get_name(old),
-                    Gst.element_state_get_name(new))
+                    Gst.Element.state_get_name(old),
+                    Gst.Element.state_get_name(new))
                 self.dump_gstreamer_debug_dot_file(dump_filename, True)
 
         def error():
@@ -357,10 +359,10 @@ class FeedComponent(basecomponent.BaseComponent):
 
     def install_eater_event_probes(self, eater):
 
-        def fdsrc_event(pad, event):
+        def fdsrc_event(pad, event, banana):
             # An event probe used to consume unwanted EOS events on eaters.
             # Called from GStreamer threads.
-            if event.type == gst.EVENT_EOS:
+            if event.type == Gst.EventType.EOS:
                 self.info('End of stream for eater %s, disconnect will be '
                           'triggered', eater.eaterAlias)
                 # We swallow it because otherwise our component acts on the EOS
@@ -369,11 +371,11 @@ class FeedComponent(basecomponent.BaseComponent):
                 return False
             return True
 
-        def depay_event(pad, event):
+        def depay_event(pad, event, banana):
             # An event probe used to consume unwanted duplicate
             # newsegment events.
             # Called from GStreamer threads.
-            if event.type == Gst.EVENT_NEWSEGMENT:
+            if event.type == Gst.EventType.EOS:
                 # We do this because we know gdppay/gdpdepay screw up on 2nd
                 # newsegments (unclear what the original reason for this
                 # was, perhaps #349204)
@@ -595,7 +597,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
         if self._clock_slaved and not self._master_clock_info:
             self.debug("Missing master clock info, deferring set to PLAYING")
-            return
+            returne
 
         for eater in self.eaters.values():
             if not eater.fd:
@@ -870,7 +872,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
             def _block_cb(pad, blocked):
                 pass
-            srcpad.set_blocked_async(True, _block_cb)
+            srcpad.add_probe(Gst.PadProbeType.BLOCK, _block_cb, None)
             # add buffer probe to drop buffers that are flagged as IN_CAPS
             # needs to be done to gdpdepay's src pad
             depay = self.get_element(eater.depayName)
@@ -928,7 +930,7 @@ class FeedComponent(basecomponent.BaseComponent):
             srcpad.link(sinkpad)
             element.set_state(Gst.State.PLAYING)
             # We're done; unblock the pad
-            srcpad.set_blocked_async(False, _block_cb)
+            srcpad.remove_probe(Gst.PadProbeTypeself.BLOCK, _block_cb, None)
         else:
             element.set_property('fd', fd)
 

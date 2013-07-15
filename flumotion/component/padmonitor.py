@@ -99,7 +99,7 @@ class PadMonitor(log.Loggable):
     def _probe_timeout(self):
         # called every so often to install a probe callback
 
-        def probe_cb(pad, buffer):
+        def probe_cb(pad, buffer, banana):
             """
             Periodically scheduled buffer probe, that ensures that we're
             currently actually having dataflow through our eater
@@ -114,7 +114,7 @@ class PadMonitor(log.Loggable):
             self._last_data_time = time.time()
 
             self.logMessage('buffer probe on %s has timestamp %s', self.name,
-                            Gst.TIME_ARGS(buffer.timestamp))
+                            str(Gst.Buffer.pts.fget))
 
             deferred, probe_id = self._probe_id.pop("id", (None, None))
             if probe_id:
