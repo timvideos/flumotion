@@ -44,28 +44,35 @@ class VideoTest(feedcomponent.ParseLaunchComponent):
         capsString = properties.get('format', 'video/x-raw')
 
         if capsString == 'video/x-raw':
-            capsString = '%s,format=(fourcc)I420' % capsString
+            capsString = '%s,format=(string)I420' % capsString
 
         # Filtered caps
-        struct = Gst.structure_from_string(capsString)
+        #struct = Gst.structure_from_string(capsString)
         for k in 'width', 'height':
             if k in properties:
-                struct[k] = properties[k]
+                #struct[k] = properties[k]
+                capsString = '%s,%s=%d' % (capsString, k, properties[k])
 
         if 'framerate' in properties:
             framerate = properties['framerate']
-            struct['framerate'] = Gst.Fraction(framerate[0], framerate[1])
+            #struct['framerate'] = Gst.Fraction(framerate[0], framerate[1])
+            capsString = "framerate=(fraction)%d/%d" % (framerate[0], framerate[1])
+
 
         # always set par
-        struct['pixel-aspect-ratio']= Gst.Fraction(1, 1)
+        #struct['pixel-aspect-ratio']= Gst.Fraction(1, 1)
+        capsString = "pixel-aspect-ratio=(fraction)%d/%d" % (1, 1)
         if 'pixel-aspect-ratio' in properties:
             par = properties['pixel-aspect-ratio']
-            struct['pixel-aspect-ratio'] = Gst.Fraction(par[0], par[1])
+            #struct['pixel-aspect-ratio'] = Gst.Fraction(par[0], par[1])
+            #capsString = '%s,' % Gst.Fraction(par[0], par[1])
+            capsString = "pixel-aspect-ratio=(fraction)%d/%d" % (par[0], par[1])
 
         # If RGB, set something videoconvert can convert.
-        if capsString == 'video/x-raw':
-            struct['red_mask'] = 0xff00
-        caps = Gst.Caps(struct)
+        #if capsString == 'video/x-raw':
+        #    struct['red_mask'] = 0xff00
+        struct = Gst.structure_from_string(capsString)
+        caps = Gst.Caps.append_structure(struct)
 
         is_live = 'is-live=true'
 

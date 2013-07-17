@@ -531,7 +531,7 @@ class FeedComponent(basecomponent.BaseComponent):
             # make sure the pipeline sticks with this clock
             self.pipeline.use_clock(clock)
 
-            self.clock_provider = GstNet.NetTimeProvider.new(clock, None, port)
+            self.clock_provider = GstNet.NetTimeProvider.new(clock, '0.0.0.0', port)
             realport = self.clock_provider.get_property('port')
 
             base_time = self.pipeline.get_base_time()
@@ -597,7 +597,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
         if self._clock_slaved and not self._master_clock_info:
             self.debug("Missing master clock info, deferring set to PLAYING")
-            returne
+            return
 
         for eater in self.eaters.values():
             if not eater.fd:
