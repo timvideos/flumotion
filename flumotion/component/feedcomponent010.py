@@ -274,7 +274,7 @@ class FeedComponent(basecomponent.BaseComponent):
                         self.__class__, msg))
 
             self.state.append('messages', m)
-            self._change_monitor.have_error(self.pipeline.get_state(),
+            self._change_monitor.have_error(self.pipeline.get_state(0),
                                             message)
 
         def eos():
@@ -359,7 +359,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
     def install_eater_event_probes(self, eater):
 
-        def fdsrc_event(pad, event, banana):
+        def fdsrc_event(pad, event, unused_user_data):
             # An event probe used to consume unwanted EOS events on eaters.
             # Called from GStreamer threads.
             if event.type == Gst.EventType.EOS:
@@ -371,7 +371,7 @@ class FeedComponent(basecomponent.BaseComponent):
                 return False
             return True
 
-        def depay_event(pad, event, banana):
+        def depay_event(pad, event, unused_user_data):
             # An event probe used to consume unwanted duplicate
             # newsegment events.
             # Called from GStreamer threads.

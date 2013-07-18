@@ -33,7 +33,6 @@ class VideoTestMedium(feedcomponent.FeedComponentMedium):
         return self.comp.set_element_property('source', 'pattern',
                                               pattern)
 
-
 class VideoTest(feedcomponent.ParseLaunchComponent):
     componentMediumClass = VideoTestMedium
 

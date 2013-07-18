@@ -66,9 +66,12 @@ class Volume(feedcomponent.Effect):
         """
         if message.get_structure().get_name() == 'level':
             s = message.get_structure()
-            peak = list(s['peak'])
-            decay = list(s['decay'])
-            rms = list(s['rms'])
+            #peak = list(s['peak'])
+            peak = list(s.get_value('peak'))
+            #decay = list(s['decay'])
+            decay = list(s.get_value('decay'))
+            #rms = list(s['rms'])
+            rms = list(s.get_value('rms'))
             for l in peak, decay, rms:
                 for index, v in enumerate(l):
                     try:

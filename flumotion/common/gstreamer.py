@@ -120,6 +120,7 @@ def element_factory_exists(name):
     @rtype: boolean
     """
     registry = Gst.Registry.get()
+    # FIXME(bananadine): Check that lookup_feature is returning a Gst.TYPE_ELEMENT_FACTORY
     factory = registry.lookup_feature(name)
 
     if factory:
