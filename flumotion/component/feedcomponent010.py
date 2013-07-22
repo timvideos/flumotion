@@ -930,7 +930,7 @@ class FeedComponent(basecomponent.BaseComponent):
             srcpad.link(sinkpad)
             element.set_state(Gst.State.PLAYING)
             # We're done; unblock the pad
-            srcpad.remove_probe(Gst.PadProbeTypeself.BLOCK, _block_cb, None)
+            srcpad.remove_probe(Gst.PadProbeType.BLOCK, _block_cb, None)
         else:
             element.set_property('fd', fd)
 
