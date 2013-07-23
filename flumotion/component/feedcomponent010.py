@@ -331,8 +331,8 @@ class FeedComponent(basecomponent.BaseComponent):
                     self.debug("we have a discont on eater %s of %.9f s "
                                "between %s and %s ", eater.eaterAlias,
                                dSeconds,
-                               Gst.TIME_ARGS(prevTs + prevDuration),
-                               Gst.TIME_ARGS(curTs))
+                               str(prevTs + prevDuration),
+                               str(curTs))
 
                     eater.timestampDiscont(dSeconds,
                                            float(curTs) / float(Gst.SECOND))
@@ -488,7 +488,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
     def set_master_clock(self, ip, port, base_time):
         self.debug("Master clock set to %s:%d with base_time %s", ip, port,
-            Gst.TIME_ARGS(base_time))
+            str(base_time))
 
         assert self._clock_slaved
         if self._master_clock_info == (ip, port, base_time):
@@ -499,7 +499,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
         self._master_clock_info = ip, port, base_time
 
-        clock = Gst.NetClientClock(None, ip, port, base_time)
+        clock = GstNet.NetClientClock.new('Noname', ip, port, base_time)
         # disable the pipeline's management of base_time -- we're going
         # to set it ourselves.
         self.pipeline.set_new_stream_time(Gst.CLOCK_TIME_NONE)
@@ -537,7 +537,7 @@ class FeedComponent(basecomponent.BaseComponent):
             base_time = self.pipeline.get_base_time()
 
             self.debug('provided master clock from %r, base time %s',
-                       clock, Gst.TIME_ARGS(base_time))
+                       clock, str(base_time))
 
             if self.medium:
                 # FIXME: This isn't always correct. We need a more
@@ -615,7 +615,7 @@ class FeedComponent(basecomponent.BaseComponent):
                 # a currently disconnected client will have fd None
                 if client.fd is not None:
                     array = feederElement.emit('get-stats', client.fd)
-                    if len(array) == 0:
+                    if len(array.to_string()) == 0:
                         # There is an unavoidable race here: we can't know
                         # whether the fd has been removed from multifdsink.
                         # However, if we call get-stats on an fd that
@@ -930,7 +930,7 @@ class FeedComponent(basecomponent.BaseComponent):
             srcpad.link(sinkpad)
             element.set_state(Gst.State.PLAYING)
             # We're done; unblock the pad
-            srcpad.remove_probe(Gst.PadProbeType.BLOCK, _block_cb, None)
+            srcpad.remove_probe(Gst.PadProbeType.BLOCK)
         else:
             element.set_property('fd', fd)
 
