@@ -626,7 +626,14 @@ class FeedComponent(basecomponent.BaseComponent):
                         self.debug('Feeder element for feed %s does not know '
                             'client fd %d' % (feedId, client.fd))
                     else:
-                        client.setStats(array)
+                        string = array.to_string()
+                        newstring = string.replace(",","")
+                        split = newstring.split()
+                        lista = []
+                        for x in split:
+                            y = x.index(")")
+                            lista.append(x[y+1:])
+                        client.setStats(lista)
         self._feeder_probe_cl = reactor.callLater(
             self.FEEDER_STATS_UPDATE_FREQUENCY,
             self._feeder_probe_calllater)
