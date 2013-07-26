@@ -19,9 +19,7 @@ import gi
 gi.require_version('Gst', '1.0')
 gi.require_version('GstNet', '1.0')
 from gi.repository import GObject, Gst
-#import pprint
 import sys
-#pprint.pprint(sys.modules)
 from gi.repository import GstNet
 import os
 import time
@@ -502,8 +500,10 @@ class FeedComponent(basecomponent.BaseComponent):
         clock = GstNet.NetClientClock.new('Noname', ip, port, base_time)
         # disable the pipeline's management of base_time -- we're going
         # to set it ourselves.
-        self.pipeline.set_new_stream_time(Gst.CLOCK_TIME_NONE)
-        self.pipeline.set_base_time(base_time)
+        self.pipeline = Gst.Pipeline
+        element = self.pipeline.get_by_name()
+        element.set_start_time(Gst.CLOCK_TIME_NONE)
+        element.set_base_time(base_time)
         self.pipeline.use_clock(clock)
 
         self.try_start_pipeline()
@@ -631,7 +631,7 @@ class FeedComponent(basecomponent.BaseComponent):
                         split = newstring.split()
                         lista = []
                         for x in split:
-                            y = x.index(")")
+                            y = x.index(')')
                             lista.append(x[y+1:])
                         client.setStats(lista)
         self._feeder_probe_cl = reactor.callLater(
@@ -877,7 +877,7 @@ class FeedComponent(basecomponent.BaseComponent):
             # elements)
             srcpad = element.get_static_pad('src')
 
-            def _block_cb(pad, blocked):
+            def _block_cb(pad, blocked, unused_user_data):
                 pass
             srcpad.add_probe(Gst.PadProbeType.BLOCK, _block_cb, None)
             # add buffer probe to drop buffers that are flagged as IN_CAPS

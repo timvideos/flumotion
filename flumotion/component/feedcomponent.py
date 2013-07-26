@@ -335,7 +335,6 @@ class ParseLaunchComponent(FeedComponent):
             raise errors.ComponentSetupHandledError(e)
 
         self.pipeline_string = self.parse_pipeline(unparsed)
-
         try:
             pipeline = Gst.parse_launch(self.pipeline_string)
         except GObject.GError, e:
@@ -663,7 +662,7 @@ class MultiInputParseLaunchComponent(ParseLaunchComponent):
         # queue size to its original value. Doing this in a thread-safe manner
         # is rather tricky...
 
-        def _block_cb(pad, blocked):
+        def _block_cb(pad, blocked, unused_user_data):
             # This is called from streaming threads, but we don't do anything
             # here so it's safe.
             pass
@@ -673,13 +672,13 @@ class MultiInputParseLaunchComponent(ParseLaunchComponent):
             # the queue lock when this is called, so we block our sinkpad,
             # then re-check the current level.
             pad = element.get_static_pad("sink")
-            pad.set_blocked_async(True, _block_cb)
+            pad.add_probe(Gst.PadProbeType.BLOCK, _block_cb, None)
             level = element.get_property("current-level-buffers")
             if level < self.QUEUE_SIZE_BUFFERS:
                 element.set_property('max-size-buffers',
                     self.QUEUE_SIZE_BUFFERS)
                 element.disconnect(signalid)
-            pad.set_blocked_async(False, _block_cb)
+            pad.add_probe(Gst.PadProbeType.IDLE, _block_cb, None)
 
         signalid = queue.connect("underrun", _underrun_cb)
 
@@ -982,8 +981,8 @@ class MuxerComponent(MultiInputParseLaunchComponent):
     def get_link_pad(self, muxer, srcpad, caps):
         return muxer.get_compatible_pad(srcpad, caps)
 
-    def buffer_probe_cb(self, pad, buffer, depay, eaterAlias):
-        pad = depay.get_static_pad("src")
+    def buffer_probe_cb(self, pad, probe_info, eaterAlias):
+        pad = Gst.Element.get_static_pad('src')
         caps = pad.get_negotiated_caps()
         if not caps:
             return False
@@ -1004,23 +1003,23 @@ class MuxerComponent(MultiInputParseLaunchComponent):
             return True
         self.debug("Got link pad %r", linkpad)
         srcpad_to_link.link(linkpad)
-        depay.get_static_pad("src").remove_probe(self._probes[eaterAlias])
+        Gst.Element.get_static_pad("src").remove_probe(self._probes[eaterAlias])
         if srcpad_to_link.is_blocked():
             self.is_blocked_cb(srcpad_to_link, True)
         else:
             srcpad_to_link.set_blocked_async(True, self.is_blocked_cb)
         return True
 
-    def event_probe_cb(self, pad, event, depay, eaterAlias):
-        caps = pad.get_negotiated_caps()
+    def event_probe_cb(self, pad, probe_info, eaterAlias):
+        caps = pad.get_current_caps()
         if caps is None:
             return True
         # if this pad doesn't push audio, remove the probe
         if 'audio' not in caps[0].to_string():
-            depay.get_static_pad("src").remove_probe(self._eprobes[eaterAlias])
-        if event.get_structure() is None:
+            Gst.Element.get_static_pad('src').remove_probe(self._eprobes[eaterAlias])
+        if caps.get_structure() is None:
             return True
-        if event.get_structure().get_name() == 'GstForceKeyUnit':
+        if caps.get_structure().get_name() == 'GstForceKeyUnit':
             return False
         return True
 
