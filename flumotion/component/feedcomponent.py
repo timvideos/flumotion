@@ -334,6 +334,7 @@ class ParseLaunchComponent(FeedComponent):
             self.addMessage(m)
             raise errors.ComponentSetupHandledError(e)
 
+        #print "doom %s" % unparsed
         self.pipeline_string = self.parse_pipeline(unparsed)
         try:
             pipeline = Gst.parse_launch(self.pipeline_string)
@@ -1015,11 +1016,11 @@ class MuxerComponent(MultiInputParseLaunchComponent):
         if caps is None:
             return True
         # if this pad doesn't push audio, remove the probe
-        if 'audio' not in caps[0].to_string():
+        if 'audio' not in caps.to_string():
             Gst.Element.get_static_pad('src').remove_probe(self._eprobes[eaterAlias])
-        if caps.get_structure() is None:
+        if caps.get_structure(0) is None:
             return True
-        if caps.get_structure().get_name() == 'GstForceKeyUnit':
+        if caps.get_structure(0).get_name() == 'GstForceKeyUnit':
             return False
         return True
 

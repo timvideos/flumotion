@@ -501,7 +501,7 @@ class FeedComponent(basecomponent.BaseComponent):
         # disable the pipeline's management of base_time -- we're going
         # to set it ourselves.
         self.pipeline = Gst.Pipeline
-        element = self.pipeline.get_by_name()
+        element = self.pipeline.get_by_name('src')
         element.set_start_time(Gst.CLOCK_TIME_NONE)
         element.set_base_time(base_time)
         self.pipeline.use_clock(clock)
@@ -628,11 +628,13 @@ class FeedComponent(basecomponent.BaseComponent):
                     else:
                         string = array.to_string()
                         newstring = string.replace(",","")
+                        newstring = string.replace(";","")
                         split = newstring.split()
                         lista = []
-                        for x in split:
+                        for x in split[1:]:
                             y = x.index(')')
-                            lista.append(x[y+1:])
+                            no_comma = x[y+1:].replace(",","")
+                            lista.append(float(no_comma))
                         client.setStats(lista)
         self._feeder_probe_cl = reactor.callLater(
             self.FEEDER_STATS_UPDATE_FREQUENCY,
