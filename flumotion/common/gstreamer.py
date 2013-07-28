@@ -48,6 +48,11 @@ def verbose_deep_notify_cb(object, orig, pspec, component):
     """
     A default deep-notify signal handler for pipelines.
     """
+    #print object, component, orig
+    #print object gives <Pipeline object at 0x9cb0c34 (GstPipeline at 0x9ce6c38)>
+    #print orig gives <__main__.GstMultiFdSink object at 0x9868c0c (GstMultiFdSink at 0x98656d0)>
+    #print pspec gives None
+    #print component prints all components but the video test producer
     value = orig.get_property(pspec.name)
     if pspec.value_type == GObject.TYPE_BOOLEAN:
         if value:

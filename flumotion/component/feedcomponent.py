@@ -334,7 +334,8 @@ class ParseLaunchComponent(FeedComponent):
             self.addMessage(m)
             raise errors.ComponentSetupHandledError(e)
 
-        #print "doom %s" % unparsed
+        #except Exception, ex:
+        #print ex
         self.pipeline_string = self.parse_pipeline(unparsed)
         try:
             pipeline = Gst.parse_launch(self.pipeline_string)

@@ -70,21 +70,16 @@ class VideoTest(feedcomponent.ParseLaunchComponent):
         # If RGB, set something videoconvert can convert.
         #if capsString == 'video/x-raw':
         #    struct['red_mask'] = 0xff00
-        #struct = Gst.structure_from_string(capsString)
-        #caps = Gst.Caps.from_string(capsString)
+        print capsString
+        caps = Gst.Caps.from_string(capsString)
         is_live = 'is-live=true'
 
         overlay = ""
         overlayTimestamps = properties.get('overlay-timestamps', False)
         if overlayTimestamps:
             overlay = " timeoverlay ! "
-
-        capsString = "videotestsrc %s name=source ! " % is_live + overlay + \
-            "identity name=identity silent=TRUE ! %s" % capsString
-        caps = Gst.Caps.from_string(capsString)
-        #print "doom %s" % capsString
-        return caps
-
+        return "videotestsrc %s name=source ! " % is_live + overlay + \
+            "identity name=identity silent=TRUE ! %s" % caps
     # Set properties
 
     def configure_pipeline(self, pipeline, properties):
