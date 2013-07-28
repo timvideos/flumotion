@@ -43,19 +43,19 @@ class VideoTest(feedcomponent.ParseLaunchComponent):
         capsString = properties.get('format', 'video/x-raw')
 
         if capsString == 'video/x-raw':
-            capsString = '%s format=(string)I420' % capsString
+            capsString = '%s, format=(string)I420' % capsString
 
         # Filtered caps
         #struct = Gst.structure_from_string(capsString)
         for k in 'width', 'height':
             if k in properties:
                 #struct[k] = properties[k]
-                capsString = '%s %s=%d' % (capsString, k, properties[k])
+                capsString = '%s, %s=(int)%d' % (capsString, k, properties[k])
 
         if 'framerate' in properties:
             framerate = properties['framerate']
             #struct['framerate'] = Gst.Fraction(framerate[0], framerate[1])
-            capsString += " framerate=(fraction)%d/%d " % (framerate[0], framerate[1])
+            capsString += ", framerate=(fraction)%d/%d, " % (framerate[0], framerate[1])
 
 
         # always set par
@@ -70,8 +70,7 @@ class VideoTest(feedcomponent.ParseLaunchComponent):
         # If RGB, set something videoconvert can convert.
         #if capsString == 'video/x-raw':
         #    struct['red_mask'] = 0xff00
-        print capsString
-        caps = Gst.Caps.from_string(capsString)
+        #caps = Gst.Caps.from_string(capsString)
         is_live = 'is-live=true'
 
         overlay = ""
@@ -79,7 +78,7 @@ class VideoTest(feedcomponent.ParseLaunchComponent):
         if overlayTimestamps:
             overlay = " timeoverlay ! "
         return "videotestsrc %s name=source ! " % is_live + overlay + \
-            "identity name=identity silent=TRUE ! %s" % caps
+            "identity name=identity silent=TRUE ! %s" % capsString
     # Set properties
 
     def configure_pipeline(self, pipeline, properties):
