@@ -500,10 +500,8 @@ class FeedComponent(basecomponent.BaseComponent):
         clock = GstNet.NetClientClock.new('Noname', ip, port, base_time)
         # disable the pipeline's management of base_time -- we're going
         # to set it ourselves.
-        self.pipeline = Gst.Pipeline
-        element = self.pipeline.get_by_name('src')
-        element.set_start_time(Gst.CLOCK_TIME_NONE)
-        element.set_base_time(base_time)
+        self.pipeline.set_start_time(Gst.CLOCK_TIME_NONE)
+        self.pipeline.set_base_time(base_time)
         self.pipeline.use_clock(clock)
 
         self.try_start_pipeline()
@@ -939,7 +937,7 @@ class FeedComponent(basecomponent.BaseComponent):
             srcpad.link(sinkpad)
             element.set_state(Gst.State.PLAYING)
             # We're done; unblock the pad
-            srcpad.remove_probe(Gst.PadProbeType.BLOCK)
+            srcpad.remove_probe(_block_cb)
         else:
             element.set_property('fd', fd)
 
