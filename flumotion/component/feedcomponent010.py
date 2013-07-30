@@ -500,7 +500,7 @@ class FeedComponent(basecomponent.BaseComponent):
         clock = GstNet.NetClientClock.new('Noname', ip, port, base_time)
         # disable the pipeline's management of base_time -- we're going
         # to set it ourselves.
-        self.pipeline.set_start_time(Gst.CLOCK_TIME_NONE)
+        self.pipeline.set_start_time(2**64-1)
         self.pipeline.set_base_time(base_time)
         self.pipeline.use_clock(clock)
 

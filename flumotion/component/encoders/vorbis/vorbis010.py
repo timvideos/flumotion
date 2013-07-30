@@ -72,7 +72,7 @@ class Vorbis(feedcomponent.EncoderComponent):
             # this comes from another thread
             caps = pad.query_caps(None).to_string()
             kaps = Gst.structure_from_string(caps)
-            in_rate = kaps[0].get_value('rate')
+            in_rate = 44100 #kaps[0].get_value('rate')
 
             # now do necessary filtercaps
             self.rate = in_rate

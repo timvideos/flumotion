@@ -687,7 +687,8 @@ class ReconfigurableComponent(ParseLaunchComponent):
 
     disconnectedPads = False
     dropStreamHeaders = False
-    block_probe_id = None
+    block_probe_id = {}
+    counter = 0
 
     def _get_base_pipeline_string(self):
         """Should be overrided by subclasses to provide the pipeline the
@@ -813,14 +814,17 @@ class ReconfigurableComponent(ParseLaunchComponent):
         for elem in self.get_input_elements():
             pad = elem.get_static_pad('src')
             self.debug("RESET: Blocking pad %s", pad)
-            self.block_probe_id = pad.add_probe(Gst.PadProbeType.BLOCK, self._on_eater_blocked, None)
             pad.add_probe(Gst.PadProbeType.BLOCK, self._on_eater_blocked, None)
+            counter = counter+1
+        for x in counter:
+            self.block_probe_id[x] = pad.add_probe(Gst.PadProbeType.BLOCK, self._on_eater_blocked, None)
 
     def _unblock_eaters(self):
         for elem in self.get_input_elements():
             pad = elem.get_static_pad('src')
             self.debug("RESET: Unblocking pad %s", pad)
-            pad.remove_probe(self.block_probe_id)
+        for x in self.block_probe_id:
+            pad.remove_probe(self.block_probe_id[x])
 
     def _unlink_pads(self, element, directions):
         for pad in element.pads():
@@ -1046,10 +1050,10 @@ class MuxerComponent(MultiInputParseLaunchComponent):
         for e in self.eaters:
             depay = self.get_element(self.eaters[e].depayName)
             self._probes[e] = \
-                self.bp_id = depay.get_static_pad("src").add_probe(
+                depay.get_static_pad("src").add_probe(
                     Gst.PadProbeType.BUFFER, self.buffer_probe_cb, [depay, e])
-                #depay.get_static_pad("src").add_probe(
-                #    Gst.PadProbeType.BUFFER, self.buffer_probe_cb, [depay, e])
+            self.bp_id = depay.get_static_pad("src").add_probe(
+                            Gst.PadProbeType.BUFFER, self.buffer_probe_cb, [depay, e])
             # Add an event probe to drop GstForceKeyUnit events
             # in audio pads
             if self.dropAudioKuEvents:
