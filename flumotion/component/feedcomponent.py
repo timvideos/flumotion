@@ -20,7 +20,6 @@ Feed components, participating in the stream
 """
 
 import os
-
 import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import GObject, Gst #, GstInterfaces
@@ -816,7 +815,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
             self.debug("RESET: Blocking pad %s", pad)
             pad.add_probe(Gst.PadProbeType.BLOCK, self._on_eater_blocked, None)
             counter = counter+1
-        for x in counter:
+        for x in xrange(counter):
             self.block_probe_id[x] = pad.add_probe(Gst.PadProbeType.BLOCK, self._on_eater_blocked, None)
 
     def _unblock_eaters(self):
@@ -984,7 +983,7 @@ class MuxerComponent(MultiInputParseLaunchComponent):
 
     LINK_MUXER = False
     dropAudioKuEvents = True
-    bp_id = None
+    bp_id = {}
     block_probe_id2 = None
 
     def get_link_pad(self, muxer, srcpad, caps):
@@ -1013,7 +1012,8 @@ class MuxerComponent(MultiInputParseLaunchComponent):
             return True
         self.debug("Got link pad %r", linkpad)
         srcpad_to_link.link(linkpad)
-        depay.get_static_pad("src").remove_probe(self.bp_id)
+        for b in self.bp_id:
+            depay.get_static_pad("src").remove_probe(self.bp_id[b])
         if srcpad_to_link.is_blocked():
             self.is_blocked_cb(srcpad_to_link, True)
         else:
@@ -1028,7 +1028,8 @@ class MuxerComponent(MultiInputParseLaunchComponent):
             return True
         # if this pad doesn't push audio, remove the probe
         if 'audio' not in caps.to_string():
-            depay.get_static_pad('src').remove_probe(self.bp_id)
+            for b in self.bp_id:
+                depay.get_static_pad('src').remove_probe(self.bp_id[b])
         if caps.get_structure(0) is None:
             return True
         if caps.get_structure(0).get_name() == 'GstForceKeyUnit':
@@ -1046,13 +1047,15 @@ class MuxerComponent(MultiInputParseLaunchComponent):
         self.fired_eaters = 0
         self._probes = {} # depay element -> id
         self._eprobes = {} # depay element -> id
-
+        numb = 0
         for e in self.eaters:
             depay = self.get_element(self.eaters[e].depayName)
             self._probes[e] = \
                 depay.get_static_pad("src").add_probe(
                     Gst.PadProbeType.BUFFER, self.buffer_probe_cb, [depay, e])
-            self.bp_id = depay.get_static_pad("src").add_probe(
+            numb = numb+1
+        for a in xrange(numb):
+            self.bp_id[a] = depay.get_static_pad("src").add_probe(
                             Gst.PadProbeType.BUFFER, self.buffer_probe_cb, [depay, e])
             # Add an event probe to drop GstForceKeyUnit events
             # in audio pads
