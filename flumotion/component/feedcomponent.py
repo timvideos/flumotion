@@ -277,6 +277,7 @@ from feedcomponent010 import FeedComponent
 
 FeedComponent.componentMediumClass = FeedComponentMedium
 
+
 class ParseLaunchComponent(FeedComponent):
     """A component using gst-launch syntax
 
@@ -334,6 +335,7 @@ class ParseLaunchComponent(FeedComponent):
             raise errors.ComponentSetupHandledError(e)
 
         self.pipeline_string = self.parse_pipeline(unparsed)
+
         try:
             pipeline = Gst.parse_launch(self.pipeline_string)
         except GObject.GError, e:
@@ -504,6 +506,7 @@ class ParseLaunchComponent(FeedComponent):
         gdppay = self.get_element(e.elementName + '-pay')
         return gdppay.get_static_pad("sink")
 
+
 class Effect(log.Loggable):
     """
     I am a part of a feed component for a specific group
@@ -550,6 +553,7 @@ class Effect(log.Loggable):
         @rtype:  L{FeedComponent}
         """
         return self.component
+
 
 class PostProcEffect (Effect):
     """
@@ -604,6 +608,7 @@ class PostProcEffect (Effect):
         peerSinkPad.link(self.effectBin.get_static_pad('sink'))
         self.effectBin.get_static_pad('src').link(peerSrcPad)
         self.plugged = True
+
 
 class MultiInputParseLaunchComponent(ParseLaunchComponent):
     """
@@ -672,7 +677,6 @@ class MultiInputParseLaunchComponent(ParseLaunchComponent):
             # then re-check the current level.
             pad = element.get_static_pad("sink")
             probe_id = pad.add_probe(Gst.PadProbeType.BLOCK, _block_cb, None)
-            pad.add_probe(Gst.PadProbeType.BLOCK, _block_cb, None)
             level = element.get_property("current-level-buffers")
             if level < self.QUEUE_SIZE_BUFFERS:
                 element.set_property('max-size-buffers',
@@ -682,11 +686,12 @@ class MultiInputParseLaunchComponent(ParseLaunchComponent):
 
         signalid = queue.connect("underrun", _underrun_cb)
 
+
 class ReconfigurableComponent(ParseLaunchComponent):
 
     disconnectedPads = False
     dropStreamHeaders = False
-    block_probe_id = {}
+    block_probe_ids = {}
     counter = 0
 
     def _get_base_pipeline_string(self):
@@ -736,7 +741,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
         # FIXME: Add documentation
 
         def output_reset_event(pad, event):
-            if event.type != Gst.EVENT_FLUSH_START:
+            if event.type != Gst.EventType.FLUSH_START:
                 return True
 
             self.debug('RESET: out reset event received on output pad %r', pad)
@@ -778,33 +783,35 @@ class ReconfigurableComponent(ParseLaunchComponent):
             self._block_eaters()
 
         def got_new_buffer(pad, buff, element):
-            if self.disconnectedPads:
-                self.info("INCAPS: Got buffer but we're still disconnected.")
-                return True
-
-            if not buff.flag_is_set(Gst.BUFFER_FLAG_IN_CAPS):
-                return True
-
-            self.info("INCAPS: Got buffer with caps of len %d", buff.size)
-            if buff.caps:
-                newcaps = buff.caps[0].copy()
-                resets = self.uiState.get('reset-count')
-                newcaps['count'] = resets
-                buff.set_caps(Gst.Caps(newcaps))
+            self.warning("This won't run")
             return True
+        #    if self.disconnectedPads:
+        #        self.info("INCAPS: Got buffer but we're still disconnected.")
+        #        return True
 
-        self.log('RESET: installing event probes for detecting changes')
+        #    if not buff.flag_is_set(Gst.BufferFlags.HEADER):
+        #        return True
+
+        #    self.info("INCAPS: Got buffer with caps of len %d", buff.size)
+        #    if buff.caps:
+        #        newcaps = buff.caps[0].copy()
+        #        resets = self.uiState.get('reset-count')
+        #        newcaps['count'] = resets
+        #        buff.set_caps(Gst.Caps(newcaps))
+        #    return True
+
+        #self.log('RESET: installing event probes for detecting changes')
         # Listen for incoming flumotion-reset events on eaters
-        for elem in self.get_input_elements():
-            self.debug('RESET: Add caps monitor for %s', elem.get_name())
-            sink = elem.get_static_pad('sink')
-            sink.get_peer().add_probe(Gst.PadProbeType.BUFFER, got_new_buffer, elem)
-            sink.connect("notify::caps", got_new_caps)
+        #for elem in self.get_input_elements():
+        #    self.debug('RESET: Add caps monitor for %s', elem.get_name())
+        #    sink = elem.get_static_pad('sink')
+        #    sink.get_peer().add_probe(Gst.PadProbeType.BUFFER, got_new_buffer, elem)
+        #    sink.connect("notify::caps", got_new_caps)
 
-        for elem in self.get_output_elements():
-            self.debug('RESET: adding event probe for %s', elem.get_name())
-            elem.get_static_pad('sink').add_probe(
-                Gst.PadProbeType.EVENT_BOTH, output_reset_event, None)
+        #for elem in self.get_output_elements():
+        #    self.debug('RESET: adding event probe for %s', elem.get_name())
+        #    elem.get_static_pad('sink').add_probe(
+        #        Gst.PadProbeType.EVENT_BOTH, output_reset_event, None)
 
     def _block_eaters(self):
         """
@@ -816,14 +823,14 @@ class ReconfigurableComponent(ParseLaunchComponent):
             pad.add_probe(Gst.PadProbeType.BLOCK, self._on_eater_blocked, None)
             counter = counter+1
         for x in xrange(counter):
-            self.block_probe_id[x] = pad.add_probe(Gst.PadProbeType.BLOCK, self._on_eater_blocked, None)
+            self.block_probe_ids[x] = pad.add_probe(Gst.PadProbeType.BLOCK, self._on_eater_blocked, None)
 
     def _unblock_eaters(self):
         for elem in self.get_input_elements():
             pad = elem.get_static_pad('src')
             self.debug("RESET: Unblocking pad %s", pad)
-        for x in self.block_probe_id:
-            pad.remove_probe(self.block_probe_id[x])
+        for x in self.block_probe_ids:
+            pad.remove_probe(self.block_probe_ids[x])
 
     def _unlink_pads(self, element, directions):
         for pad in element.pads():
@@ -940,7 +947,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
         self._on_pad_blocked(pad, blocked)
         if blocked:
             peer = pad.get_peer()
-            peer.send_event(Gst.event_new_flush_start())
+            peer.send_event(Gst.Event.new_flush_start())
             #peer.send_event(gst.event_new_eos())
             #self._unlink_pads(pad.get_parent(), [gst.PAD_SRC])
 
@@ -953,6 +960,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
             element = element.get_static_pad('src').get_peer().get_parent()
             self._remove_pipeline(self.pipeline, element, end, done)
         self._rebuild_pipeline()
+
 
 class EncoderComponent(ParseLaunchComponent):
     """
@@ -975,6 +983,7 @@ class EncoderComponent(ParseLaunchComponent):
             self.try_start_pipeline(force=True)
         return True
 
+
 class MuxerComponent(MultiInputParseLaunchComponent):
     """
     This class provides for multi-input ParseLaunchComponents, such as muxers,
@@ -983,7 +992,6 @@ class MuxerComponent(MultiInputParseLaunchComponent):
 
     LINK_MUXER = False
     dropAudioKuEvents = True
-    bp_id = {}
     block_probe_id2 = None
 
     def get_link_pad(self, muxer, srcpad, caps):
@@ -991,7 +999,7 @@ class MuxerComponent(MultiInputParseLaunchComponent):
 
     def buffer_probe_cb(self, pad, probe_info, clientData):
         depay, eaterAlias = clientData
-        pad = depay.get_static_pad('src')
+        pad = depay.get_static_pad("src")
         caps = pad.get_current_caps()
         if not caps:
             return False
@@ -1012,13 +1020,11 @@ class MuxerComponent(MultiInputParseLaunchComponent):
             return True
         self.debug("Got link pad %r", linkpad)
         srcpad_to_link.link(linkpad)
-        for b in self.bp_id:
-            depay.get_static_pad("src").remove_probe(self.bp_id[b])
+        depay.get_static_pad("src").remove_probe(self._probes[eaterAlias])
         if srcpad_to_link.is_blocked():
             self.is_blocked_cb(srcpad_to_link, True)
         else:
             self.block_probe_id2 = srcpad_to_link.add_probe(Gst.PadProbeType.BLOCK, self.is_blocked_cb, None)
-            srcpad_to_link.add_probe(Gst.PadProbeType.BLOCK, self.is_blocked_cb, None)
         return True
 
     def event_probe_cb(self, pad, probe_info, clientData):
@@ -1028,8 +1034,7 @@ class MuxerComponent(MultiInputParseLaunchComponent):
             return True
         # if this pad doesn't push audio, remove the probe
         if 'audio' not in caps.to_string():
-            for b in self.bp_id:
-                depay.get_static_pad('src').remove_probe(self.bp_id[b])
+            depay.get_static_pad('src').remove_probe(self._eprobes[eaterAlias])
         if caps.get_structure(0) is None:
             return True
         if caps.get_structure(0).get_name() == 'GstForceKeyUnit':
@@ -1047,16 +1052,12 @@ class MuxerComponent(MultiInputParseLaunchComponent):
         self.fired_eaters = 0
         self._probes = {} # depay element -> id
         self._eprobes = {} # depay element -> id
-        numb = 0
+
         for e in self.eaters:
             depay = self.get_element(self.eaters[e].depayName)
             self._probes[e] = \
                 depay.get_static_pad("src").add_probe(
                     Gst.PadProbeType.BUFFER, self.buffer_probe_cb, [depay, e])
-            numb = numb+1
-        for a in xrange(numb):
-            self.bp_id[a] = depay.get_static_pad("src").add_probe(
-                            Gst.PadProbeType.BUFFER, self.buffer_probe_cb, [depay, e])
             # Add an event probe to drop GstForceKeyUnit events
             # in audio pads
             if self.dropAudioKuEvents:
