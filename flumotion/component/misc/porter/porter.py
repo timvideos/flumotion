@@ -323,9 +323,15 @@ class Porter(component.BaseComponent, log.Loggable):
             except OSError:
                 pass
 
-            self._socketlistener = reactor.listenWith(
-                fdserver.FDPort, self._socketPath,
-                serverfactory, mode=self._socketMode)
+            # listenWith is deprecated but the function never did much anyway
+            #
+            # self._socketlistener = reactor.listenWith(
+            #    fdserver.FDPort, self._socketPath,
+            #    serverfactory, mode=self._socketMode)
+            self._socketlistener = fdserver.FDPort(self._socketPath,
+                serverfactory, reactor=reactor, mode=self._socketMode)
+            self._socketlistener.startListening()
+
             self.info("Now listening on socketPath %s", self._socketPath)
         except error.CannotListenError:
             self.warning("Failed to create socket %s" % self._socketPath)
@@ -350,9 +356,9 @@ class Porter(component.BaseComponent, log.Loggable):
         # appropriate protocol (HTTP, RTSP, etc.)
         factory = PorterProtocolFactory(self, proto)
         try:
-            reactor.listenWith(
-                fdserver.PassableServerPort, self._port, factory,
-                    interface=self._interface)
+            p = fdserver.PassableServerPort(self._port, factory,
+                      interface=self._interface, reactor=reactor)
+            p.startListening()
             self.info("Now listening on interface %r on port %d",
                       self._interface, self._port)
         except error.CannotListenError:
