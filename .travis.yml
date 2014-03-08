@@ -1,0 +1,20 @@
+language: python
+python:
+  - "2.7"
+virtualenv:
+  system_site_packages: true
+# installing missing packages
+before_install:
+ - sudo add-apt-repository ppa:gstreamer-developers/ppa -y
+ - sudo apt-get update -qq
+install:
+ - sudo apt-get install -qq autopoint python-gst0.10 gstreamer0.10* python-gi python3-gi gstreamer1.0* gir1.2-gstreamer-1.0 gir1.2-gst-plugins-base-1.0 libglib2.0-dev gir1.2-glib-2.0 libgirepository1.0-dev libglib2.0-0 python-gi libxml-parser-perl python-twisted python-gtk2 pkg-config libglib2.0-dev liborc-0.4-dev bison flex
+# command to run tests
+script:
+ - ./autogen.sh
+ - make
+ - make test
+# specified which branches to test
+branches:
+  only:
+    - master
