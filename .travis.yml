@@ -9,13 +9,13 @@ before_install:
  - sudo apt-get update -qq
 install:
  - sudo apt-get install -qq subversion autopoint python-gst0.10 gstreamer0.10* python-gi python3-gi gstreamer1.0* gir1.2-gstreamer-1.0 gir1.2-gst-plugins-base-1.0 libglib2.0-dev gir1.2-glib-2.0 libgirepository1.0-dev libglib2.0-0 python-gi libxml-parser-perl python-twisted python-gtk2 pkg-config libglib2.0-dev liborc-0.4-dev bison flex
- - pip install icalendar pyparsing faulthandler
+ - sudo pip install icalendar pyparsing faulthandler
 # command to run tests
 script:
  - python -c "import faulthandler; faulthandler.enable()"
  - ./autogen.sh
  - make
- - trial flumotion.test
+ - trial -e -rselect flumotion.test
 # specified which branches to test
 branches:
   only:
