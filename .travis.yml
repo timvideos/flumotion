@@ -15,8 +15,12 @@ script:
  - python -c "import faulthandler; faulthandler.enable()"
  - ./autogen.sh
  - make
- - trial -e -rselect flumotion.test
+ - trial -rselect flumotion.$TEST_TYPE
 # specified which branches to test
 branches:
   only:
     - master
+# parallelizing the builds
+env:
+ - TEST_TYPE=test
+ - TEST_TYPE=test.test_dialogs
