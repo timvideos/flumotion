@@ -21,7 +21,7 @@ script:
 # specified which branches to test
 branches:
   only:
-    - master
+    - porting-to-gst1.0
 # parallelizing the builds
 env:
  - TEST_TYPE=test
