@@ -15,11 +15,13 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst
 from twisted.trial import unittest
-
 from flumotion.common import gstreamer
 
+Gst.init(None)
 
 class Factory(unittest.TestCase):
 
@@ -33,16 +35,16 @@ class Factory(unittest.TestCase):
 class Caps(unittest.TestCase):
 
     def testCaps(self):
-        caps = gst.caps_from_string(
-            'video/x-raw-yuv,width=10,framerate=5.0;video/x-raw-rgb,'
+        caps = Gst.caps_from_string(
+            'video/x-raw,width=10,framerate=5.0;video/x-raw,'
             'width=15,framerate=10.0')
         self.assertEquals(gstreamer.caps_repr(caps),
-            'video/x-raw-yuv, width=(int)10, '
-                          'framerate=(double)5; video/x-raw-rgb, '
+            'video/x-raw, width=(int)10, '
+                          'framerate=(double)5; video/x-raw, '
                           'width=(int)15, framerate=(double)10')
 
     def testCapsStreamheader(self):
-        caps = gst.caps_from_string('application/ogg,streamheader=abcd')
+        caps = Gst.caps_from_string('application/ogg,streamheader=abcd')
         self.assertEquals(gstreamer.caps_repr(caps),
             'streamheader=<...>')
 
@@ -54,16 +56,16 @@ class FakeComponent:
 
 
 def run_it_a_little_while(p):
-    p.set_state(gst.STATE_PLAYING)
-    m = p.get_bus().poll(gst.MESSAGE_EOS, -1)
-    p.set_state(gst.STATE_NULL)
+    p.set_state(Gst.State.PLAYING)
+    m = p.get_bus().poll(Gst.MESSAGE_EOS, -1)
+    p.set_state(Gst.State.NULL)
 
 
 class DeepNotify(unittest.TestCase):
 
     def testDeepNotify(self):
         component = FakeComponent()
-        pipeline = gst.parse_launch('fakesrc num-buffers=3 ! fakesink')
+        pipeline = Gst.parse_launch('fakesrc num-buffers=3 ! fakesink')
         pipeline.connect('deep-notify', gstreamer.verbose_deep_notify_cb,
             component)
 

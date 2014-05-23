@@ -14,7 +14,7 @@
 # See "LICENSE.LGPL" in the source distribution for more information.
 #
 # Headers in this file shall remain intact.
-
+'''
 import os
 
 import flumotion.common.setup
@@ -66,3 +66,4 @@ if i > -1:
         'fdpass'))
 
 del boot, flumotion, i, log, useGtk2Reactor
+'''
