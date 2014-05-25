@@ -17,7 +17,7 @@
 
 import sys
 
-from twisted.internet import defer, reactor, selectreactor, gtk2reactor
+from twisted.internet import defer, reactor, selectreactor, gtk3reactor
 
 from flumotion.common import testsuite
 from flumotion.common import log, errors
@@ -31,10 +31,10 @@ from flumotion.test.comptest import ComponentTestHelper, ComponentWrapper, \
 attr = testsuite.attr
 
 
-class TestCompTestGtk2Reactorness(testsuite.TestCase):
+class TestCompTestGtk3Reactorness(testsuite.TestCase):
     supportedReactors = []
 
-    def testGtk2Supportness(self):
+    def testGtk3Supportness(self):
 
         class TestCompTestSupportedReactors(CompTestTestCase):
 
@@ -43,8 +43,8 @@ class TestCompTestGtk2Reactorness(testsuite.TestCase):
 
         obj = TestCompTestSupportedReactors('runTest')
         if not isinstance(sys.modules['twisted.internet.reactor'],
-                          gtk2reactor.Gtk2Reactor):
-            # not running with a gtk2reactor, the TestCompTestSupportedReactors
+                          gtk3reactor.Gtk3Reactor):
+            # not running with a gtk3reactor, the TestCompTestSupportedReactors
             # instance should have a 'skip' attribute
             self.failUnless(hasattr(obj, 'skip'),
                             "setting supportedReactors doesn't set 'skip'"

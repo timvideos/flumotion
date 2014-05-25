@@ -18,7 +18,7 @@
 import gst
 
 from twisted.python import failure
-from twisted.internet import defer, reactor, interfaces, gtk2reactor
+from twisted.internet import defer, reactor, interfaces, gtk3reactor
 from twisted.web import client, error
 
 from flumotion.common import testsuite

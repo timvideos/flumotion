@@ -18,7 +18,7 @@
 from flumotion.common.testsuite import TestCase
 from flumotion.component import feedcomponent
 from flumotion.component.eater import Eater
-from twisted.internet import defer, gtk2reactor
+from twisted.internet import defer, gtk3reactor
 
 
 class FakeMuxerComponent(feedcomponent.MuxerComponent):
@@ -47,7 +47,7 @@ class FeedComponentMedium(feedcomponent.FeedComponentMedium):
 
 class TestFeedComponentMedium(TestCase):
 
-    supportedReactors = [gtk2reactor.Gtk2Reactor]
+    supportedReactors = [gtk3reactor.Gtk3Reactor]
 
     def setUp(self):
         config = {}
@@ -100,7 +100,7 @@ class TestFeedComponentMedium(TestCase):
 
 class TestMuxer(TestCase):
 
-    supportedReactors = [gtk2reactor.Gtk2Reactor]
+    supportedReactors = [gtk3reactor.Gtk3Reactor]
 
     def setup(self):
         self.fakecomp = None

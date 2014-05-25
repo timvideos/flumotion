@@ -14,7 +14,7 @@
 # See "LICENSE.LGPL" in the source distribution for more information.
 #
 # Headers in this file shall remain intact.
-'''
+
 import os
 
 import flumotion.common.setup
@@ -24,18 +24,18 @@ flumotion.common.setup.setup()
 from flumotion.common import log
 
 
-def useGtk2Reactor():
-    var = 'FLU_TEST_GTK2_REACTOR'
+def useGtk3Reactor():
+    var = 'FLU_TEST_GTK3_REACTOR'
 
     if var not in os.environ:
         return False
     else:
         return True
 
-if useGtk2Reactor():
-    log.info('check', 'using gtk2 reactor')
-    from twisted.internet import gtk2reactor
-    gtk2reactor.install()
+if useGtk3Reactor():
+    log.info('check', 'using gtk3 reactor')
+    from twisted.internet import gtk3reactor
+    gtk3reactor.install()
 else:
     log.info('check', 'using default reactor')
 
@@ -65,5 +65,4 @@ if i > -1:
     fdpass.__path__.append(os.path.join(top_builddir, 'flumotion', 'extern',
         'fdpass'))
 
-del boot, flumotion, i, log, useGtk2Reactor
-'''
+del boot, flumotion, i, log, useGtk3Reactor

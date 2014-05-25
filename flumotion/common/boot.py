@@ -261,9 +261,9 @@ def boot(path, gtk=False, gst=True, installReactor=True):
 
     # installing the reactor could override our packager's import hooks ...
     if installReactor:
-        from twisted.internet import gtk2reactor
+        from twisted.internet import gtk3reactor
         try:
-            gtk2reactor.install(useGtk=gtk)
+            gtk3reactor.install(useGtk=gtk)
         except RuntimeError, e:
             safeprintf(sys.stderr, 'ERROR: %s\n', e)
             sys.exit(1)
