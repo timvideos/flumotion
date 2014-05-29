@@ -15,8 +15,8 @@
 #
 # Headers in this file shall remain intact.
 
-import gobject
-import gtk
+from gi.repository import GObject
+from gi.repository import Gtk
 
 from flumotion.common import testsuite
 from flumotion.common import errors, pygobject
@@ -26,7 +26,7 @@ from flumotion.common.pygobject import gsignal, gproperty
 class SetProperty(testsuite.TestCase):
 
     def testButton(self):
-        b = gtk.Button()
+        b = Gtk.Button()
 
         # string
         pygobject.gobject_set_property(b, 'name', 'button')
@@ -53,13 +53,13 @@ class TestPyGObject(testsuite.TestCase):
 
     def testPyGObject(self):
 
-        class Foo(gobject.GObject):
+        class Foo(GObject.GObject):
             gsignal('hcf', bool, str)
             gproperty(bool, 'burning', 'If the object is burning',
                       False)
 
             def __init__(xself):
-                gobject.GObject.__init__(xself)
+                GObject.GObject.__init__(xself)
                 xself.connect('hcf', xself.on_hcf)
                 xself.set_property('burning', False)
 
@@ -67,7 +67,7 @@ class TestPyGObject(testsuite.TestCase):
                 self.assert_(isinstance(x, bool))
                 self.assert_(isinstance(y, str))
                 xself.set_property('burning', True)
-        gobject.type_register(Foo)
+        GObject.type_register(Foo)
 
         o = Foo()
 
