@@ -15,7 +15,9 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst
 
 from twisted.internet import defer, reactor
 from twisted.trial import unittest
@@ -31,16 +33,16 @@ class TestPadMonitor(testsuite.TestCase):
     slow = True
 
     def _run_pipeline(self, pipeline):
-        pipeline.set_state(gst.STATE_PLAYING)
-        pipeline.get_bus().poll(gst.MESSAGE_EOS, -1)
-        pipeline.set_state(gst.STATE_NULL)
+        pipeline.set_state(Gst.State.PLAYING)
+        pipeline.get_bus().poll(Gst.MessageType.EOS, 18446744073709551615L)#Gst.CLOCK_TIME_NONE
+        pipeline.set_state(Gst.State.NULL)
 
     def testPadMonitorActivation(self):
-        pipeline = gst.parse_launch(
+        pipeline = Gst.parse_launch(
             'fakesrc num-buffers=1 ! identity name=id ! fakesink')
         identity = pipeline.get_by_name('id')
 
-        srcpad = identity.get_pad('src')
+        srcpad = identity.get_static_pad('src')
         monitor = padmonitor.PadMonitor(srcpad, "identity-source",
                                         lambda name: None,
                                         lambda name: None)
@@ -62,11 +64,11 @@ class TestPadMonitor(testsuite.TestCase):
         padmonitor.PadMonitor.PAD_MONITOR_PROBE_INTERVAL = 0.2
         padmonitor.PadMonitor.PAD_MONITOR_CHECK_INTERVAL = 0.5
 
-        pipeline = gst.parse_launch(
+        pipeline = Gst.parse_launch(
             'fakesrc num-buffers=1 ! identity name=id ! fakesink')
         identity = pipeline.get_by_name('id')
 
-        srcpad = identity.get_pad('src')
+        srcpad = identity.get_static_pad('src')
 
         # Now give the reactor a chance to process the callFromThread()
 

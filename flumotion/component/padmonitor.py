@@ -17,11 +17,15 @@
 
 import time
 
-import gst
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst
 from twisted.internet import reactor, defer
 
 from flumotion.common import log
 from flumotion.common.poller import Poller
+
+Gst.init(None)
 
 __version__ = "$Rev$"
 
@@ -39,7 +43,7 @@ class PadMonitor(log.Loggable):
 
     def __init__(self, pad, name, setActive, setInactive):
         """
-        @type  pad:         L{gst.Pad}
+        @type  pad:         L{Gst.Pad}
         @type  name:        str
         @param setActive:   a callable that will be called when the pad is
                             considered active, taking the name of the monitor.
@@ -90,13 +94,13 @@ class PadMonitor(log.Loggable):
         # actually return
         d, probe_id = self._probe_id.pop("id", (None, None))
         if probe_id:
-            self._pad.remove_buffer_probe(probe_id)
+            self._pad.remove_probe(probe_id)
             d.callback(None)
 
     def _probe_timeout(self):
         # called every so often to install a probe callback
 
-        def probe_cb(pad, buffer):
+        def probe_cb(pad, buffer, user_data):
             """
             Periodically scheduled buffer probe, that ensures that we're
             currently actually having dataflow through our eater
@@ -104,19 +108,31 @@ class PadMonitor(log.Loggable):
 
             Called from GStreamer threads.
 
-            @param pad:       The gst.Pad srcpad for one eater in this
+            @param pad:       The Gst.Pad srcpad for one eater in this
                               component.
-            @param buffer:    A gst.Buffer that has arrived on this pad
+            @param buffer:    A Gst.Buffer that has arrived on this pad
             """
             self._last_data_time = time.time()
 
+            if not hasattr(Gst, 'TIME_ARGS'):
+                def TIME_ARGS(time):
+                    if time == Gst.CLOCK_TIME_NONE:
+                        return 'CLOCK_TIME_NONE'
+
+                    return '%u:%02u:%02u.%09u' % (time / (Gst.SECOND * 60 * 60),
+                                                    (time / (Gst.SECOND * 60)) % 60,
+                                                    (time / (Gst.SECOND) % 60),
+                                                    time % Gst.SECOND)
+
+                Gst.TIME_ARGS = TIME_ARGS
+
             self.logMessage('buffer probe on %s has timestamp %s', self.name,
-                            gst.TIME_ARGS(buffer.timestamp))
+                            Gst.TIME_ARGS(buffer.get_buffer().pts))
 
             deferred, probe_id = self._probe_id.pop("id", (None, None))
             if probe_id:
                 # This will be None only if detach() has been called.
-                self._pad.remove_buffer_probe(probe_id)
+                self._pad.remove_probe(probe_id)
 
                 reactor.callFromThread(deferred.callback, None)
                 # Data received! Return to happy ASAP:
@@ -130,7 +146,8 @@ class PadMonitor(log.Loggable):
         d = defer.Deferred()
         # FIXME: this is racy: evaluate RHS, drop GIL, buffer probe
         # fires before __setitem__ in LHS; need a mutex
-        self._probe_id['id'] = (d, self._pad.add_buffer_probe(probe_cb))
+        self._probe_id['id'] = (d, self._pad.add_probe(
+                                    Gst.PadProbeType.BUFFER, probe_cb, None))
         return d
 
     def _check_timeout(self):
