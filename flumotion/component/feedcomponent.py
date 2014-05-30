@@ -21,9 +21,11 @@ Feed components, participating in the stream
 
 import os
 
-import gst
-import gst.interfaces
-import gobject
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst
+#import Gst.interfaces
+from gi.repository import GObject
 
 from twisted.internet import reactor, defer
 from twisted.spread import pb
@@ -98,12 +100,12 @@ class FeedComponentMedium(basecomponent.BaseComponentMedium):
             if glob:
                 try:
                     # value has to be an integer
-                    gst.debug_set_threshold_for_name(glob, value)
+                    Gst.debug_set_threshold_for_name(glob, value)
                 except TypeError:
                     self.warning("Cannot set glob %s to value %s" % (
                         glob, value))
             else:
-                gst.debug_set_default_threshold(value)
+                Gst.debug_set_default_threshold(value)
 
         self.comp.uiState.set('gst-debug', debug)
 
@@ -338,8 +340,8 @@ class ParseLaunchComponent(FeedComponent):
         self.pipeline_string = self.parse_pipeline(unparsed)
 
         try:
-            pipeline = gst.parse_launch(self.pipeline_string)
-        except gobject.GError, e:
+            pipeline = Gst.parse_launch(self.pipeline_string)
+        except GObject.GError, e:
             self.warning('Could not parse pipeline: %s' % e.message)
             m = messages.Error(T_(N_(
                 "GStreamer error: could not parse component pipeline.")),
@@ -486,7 +488,7 @@ class ParseLaunchComponent(FeedComponent):
         Method that returns the source pad of the final element in an eater.
 
         @returns:   the GStreamer source pad of the final element in an eater
-        @rtype:     L{gst.Pad}
+        @rtype:     L{Gst.Pad}
         """
         e = self.eaters[eaterAlias]
         identity = self.get_element(e.elementName + '-identity')
@@ -501,7 +503,7 @@ class ParseLaunchComponent(FeedComponent):
         Method that returns the sink pad of the first element in a feeder
 
         @returns:   the GStreamer sink pad of the first element in a feeder
-        @rtype:     L{gst.Pad}
+        @rtype:     L{Gst.Pad}
         """
         e = self.feeders[feederAlias]
         gdppay = self.get_element(e.elementName + '-pay')
@@ -602,7 +604,7 @@ class PostProcEffect (Effect):
         peerSinkPad.unlink(peerSrcPad)
 
         # Add the deinterlacer bin to the pipeline
-        self.effectBin.set_state(gst.STATE_PLAYING)
+        self.effectBin.set_state(Gst.State.PLAYING)
         self.pipeline.add(self.effectBin)
 
         # link it with the element src pad and its peer's sink pad
@@ -740,7 +742,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
         # FIXME: Add documentation
 
         def output_reset_event(pad, event):
-            if event.type != gst.EVENT_FLUSH_START:
+            if event.type != Gst.EVENT_FLUSH_START:
                 return True
 
             self.debug('RESET: out reset event received on output pad %r', pad)
@@ -786,7 +788,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
                 self.info("INCAPS: Got buffer but we're still disconnected.")
                 return True
 
-            if not buff.flag_is_set(gst.BUFFER_FLAG_IN_CAPS):
+            if not buff.flag_is_set(Gst.BUFFER_FLAG_IN_CAPS):
                 return True
 
             self.info("INCAPS: Got buffer with caps of len %d", buff.size)
@@ -794,7 +796,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
                 newcaps = buff.caps[0].copy()
                 resets = self.uiState.get('reset-count')
                 newcaps['count'] = resets
-                buff.set_caps(gst.Caps(newcaps))
+                buff.set_caps(Gst.Caps(newcaps))
             return True
 
         self.log('RESET: installing event probes for detecting changes')
@@ -830,11 +832,11 @@ class ReconfigurableComponent(ParseLaunchComponent):
             if not ppad:
                 continue
             if (pad.get_direction() in directions and
-                pad.get_direction() == gst.PAD_SINK):
+                pad.get_direction() == Gst.PAD_SINK):
                 self.debug('RESET: unlink %s with %s', pad, ppad)
                 ppad.unlink(pad)
             elif (pad.get_direction() in directions and
-                  pad.get_direction() == gst.PAD_SRC):
+                  pad.get_direction() == Gst.PAD_SRC):
                 self.debug('RESET: unlink %s with %s', pad, ppad)
                 pad.unlink(ppad)
 
@@ -858,7 +860,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
                 element.unlink(peer)
 
             self.log("RESET: removing old element %s from pipeline", element)
-            element.set_state(gst.STATE_NULL)
+            element.set_state(Gst.State.NULL)
             pipeline.remove(element)
 
     def _rebuild_pipeline(self):
@@ -873,7 +875,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
         # Place a fakesrc element so we can know from where to start
         # rebuilding the pipeline.
         fake_pipeline = 'fakesrc name=start ! %s' % base_pipe
-        pipeline = gst.parse_launch(fake_pipeline)
+        pipeline = Gst.parse_launch(fake_pipeline)
 
         def move_element(element, orig, dest):
             if not element:
@@ -893,7 +895,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
 
                 move_element(to_link[-1], orig, dest)
 
-            self._unlink_pads(element, [gst.PAD_SRC, gst.PAD_SINK])
+            self._unlink_pads(element, [Gst.PAD_SRC, Gst.PAD_SINK])
             orig.remove(element)
             dest.add(element)
 
@@ -923,7 +925,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
             done[-1].link(elem)
 
         self.configure_pipeline(self.pipeline, self.config['properties'])
-        self.pipeline.set_state(gst.STATE_PLAYING)
+        self.pipeline.set_state(Gst.State.PLAYING)
         self._unblock_eaters()
 
         resets = self.uiState.get('reset-count')
@@ -939,9 +941,9 @@ class ReconfigurableComponent(ParseLaunchComponent):
         self._on_pad_blocked(pad, blocked)
         if blocked:
             peer = pad.get_peer()
-            peer.send_event(gst.event_new_flush_start())
-            #peer.send_event(gst.event_new_eos())
-            #self._unlink_pads(pad.get_parent(), [gst.PAD_SRC])
+            peer.send_event(Gst.event_new_flush_start())
+            #peer.send_event(Gst.event_new_eos())
+            #self._unlink_pads(pad.get_parent(), [Gst.PAD_SRC])
 
     def _on_pipeline_drained(self):
         self.debug('RESET: Proceed to unlink pipeline')
@@ -970,7 +972,7 @@ class EncoderComponent(ParseLaunchComponent):
         if gstreamer.event_is_flumotion_reset(event):
             self.debug("Got reset event in the encoder... reseting it!")
             encoder = self.get_element('encoder')
-            encoder.set_state(gst.STATE_READY)
+            encoder.set_state(Gst.State.READY)
             self.try_start_pipeline(force=True)
         return True
 
@@ -1005,7 +1007,7 @@ class MuxerComponent(MultiInputParseLaunchComponent):
             self.addMessage(m)
             # this is the streaming thread, cannot set state here
             # so we do it in the mainloop
-            reactor.callLater(0, self.pipeline.set_state, gst.STATE_NULL)
+            reactor.callLater(0, self.pipeline.set_state, Gst.State.NULL)
             return True
         self.debug("Got link pad %r", linkpad)
         srcpad_to_link.link(linkpad)

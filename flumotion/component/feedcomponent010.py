@@ -15,8 +15,8 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
-import gobject
+from gi.repository import Gst
+from gi.repository import GObject
 
 import os
 import time
@@ -129,7 +129,7 @@ class FeedComponent(basecomponent.BaseComponent):
         self.try_start_pipeline()
 
         # no race, messages marshalled asynchronously via the bus
-        d = self._change_monitor.add(gst.STATE_CHANGE_PAUSED_TO_PLAYING)
+        d = self._change_monitor.add(Gst.StateChangeReturn.PAUSED_TO_PLAYING)
         d.addCallback(lambda x: self.do_pipeline_playing())
 
     def setup_completed(self):
@@ -143,7 +143,7 @@ class FeedComponent(basecomponent.BaseComponent):
         """
         Subclasses have to implement this method.
 
-        @rtype: L{gst.Pipeline}
+        @rtype: L{Gst.Pipeline}
         """
         raise NotImplementedError(
             "subclass must implement create_pipeline")
@@ -226,7 +226,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
         @param gerror: The GError from the error message posted on the
                        GStreamer message bus.
-        @type  gerror: L{gst.GError}
+        @type  gerror: L{Gst.GError}
         @param  debug: A string with debugging information.
         @type   debug: str
 
@@ -249,8 +249,8 @@ class FeedComponent(basecomponent.BaseComponent):
                 old, new, pending = message.parse_state_changed()
                 self._change_monitor.state_changed(old, new)
                 dump_filename = "%s.%s_%s" % (self.name,
-                    gst.element_state_get_name(old),
-                    gst.element_state_get_name(new))
+                    Gst.element_state_get_name(old),
+                    Gst.element_state_get_name(new))
                 self.dump_gstreamer_debug_dot_file(dump_filename, True)
 
         def error():
@@ -284,9 +284,9 @@ class FeedComponent(basecomponent.BaseComponent):
         def default():
             self.log('message received: %r', message)
 
-        handlers = {gst.MESSAGE_STATE_CHANGED: state_changed,
-                    gst.MESSAGE_ERROR: error,
-                    gst.MESSAGE_EOS: eos}
+        handlers = {Gst.MessageType.STATE_CHANGED: state_changed,
+                    Gst.MessageType.ERROR: error,
+                    Gst.MessageType.EOS: eos}
         t = message.type
         src = message.src
         handlers.get(t, default)()
@@ -312,26 +312,26 @@ class FeedComponent(basecomponent.BaseComponent):
                     prevDuration = s["prev-duration"]
                     curTs = s["cur-timestamp"]
 
-                    if prevTs == gst.CLOCK_TIME_NONE:
+                    if prevTs == Gst.CLOCK_TIME_NONE:
                         self.debug("no previous timestamp")
                         return
-                    if prevDuration == gst.CLOCK_TIME_NONE:
+                    if prevDuration == Gst.CLOCK_TIME_NONE:
                         self.debug("no previous duration")
                         return
-                    if curTs == gst.CLOCK_TIME_NONE:
+                    if curTs == Gst.CLOCK_TIME_NONE:
                         self.debug("no current timestamp")
                         return
 
                     discont = curTs - (prevTs + prevDuration)
-                    dSeconds = discont / float(gst.SECOND)
+                    dSeconds = discont / float(Gst.SECOND)
                     self.debug("we have a discont on eater %s of %.9f s "
                                "between %s and %s ", eater.eaterAlias,
                                dSeconds,
-                               gst.TIME_ARGS(prevTs + prevDuration),
-                               gst.TIME_ARGS(curTs))
+                               Gst.TIME_ARGS(prevTs + prevDuration),
+                               Gst.TIME_ARGS(curTs))
 
                     eater.timestampDiscont(dSeconds,
-                                           float(curTs) / float(gst.SECOND))
+                                           float(curTs) / float(Gst.SECOND))
 
                 def offsetDiscont():
                     prevOffsetEnd = s["prev-offset-end"]
@@ -358,7 +358,7 @@ class FeedComponent(basecomponent.BaseComponent):
         def fdsrc_event(pad, event):
             # An event probe used to consume unwanted EOS events on eaters.
             # Called from GStreamer threads.
-            if event.type == gst.EVENT_EOS:
+            if event.type == Gst.EVENT_EOS:
                 self.info('End of stream for eater %s, disconnect will be '
                           'triggered', eater.eaterAlias)
                 # We swallow it because otherwise our component acts on the EOS
@@ -371,7 +371,7 @@ class FeedComponent(basecomponent.BaseComponent):
             # An event probe used to consume unwanted duplicate
             # newsegment events.
             # Called from GStreamer threads.
-            if event.type == gst.EVENT_NEWSEGMENT:
+            if event.type == Gst.EVENT_NEWSEGMENT:
                 # We do this because we know gdppay/gdpdepay screw up on 2nd
                 # newsegments (unclear what the original reason for this
                 # was, perhaps #349204)
@@ -411,7 +411,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
         # set to ready so that multifdsinks can always receive fds, even
         # if the pipeline has a delayed start due to clock slaving
-        self.pipeline.set_state(gst.STATE_READY)
+        self.pipeline.set_state(Gst.State.READY)
 
         # start checking feeders, if we have a sufficiently recent multifdsink
         if self._get_stats_supported:
@@ -447,8 +447,8 @@ class FeedComponent(basecomponent.BaseComponent):
         if self.clock_provider:
             self.clock_provider.set_property('active', False)
             self.clock_provider = None
-        retval = self.pipeline.set_state(gst.STATE_NULL)
-        if retval != gst.STATE_CHANGE_SUCCESS:
+        retval = self.pipeline.set_state(Gst.State.NULL)
+        if retval != Gst.StateChangeReturn.SUCCESS:
             self.warning('Setting pipeline to NULL failed')
 
     def cleanup(self):
@@ -484,7 +484,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
     def set_master_clock(self, ip, port, base_time):
         self.debug("Master clock set to %s:%d with base_time %s", ip, port,
-            gst.TIME_ARGS(base_time))
+            Gst.TIME_ARGS(base_time))
 
         assert self._clock_slaved
         if self._master_clock_info == (ip, port, base_time):
@@ -495,10 +495,10 @@ class FeedComponent(basecomponent.BaseComponent):
 
         self._master_clock_info = ip, port, base_time
 
-        clock = gst.NetClientClock(None, ip, port, base_time)
+        clock = Gst.NetClientClock(None, ip, port, base_time)
         # disable the pipeline's management of base_time -- we're going
         # to set it ourselves.
-        self.pipeline.set_new_stream_time(gst.CLOCK_TIME_NONE)
+        self.pipeline.set_new_stream_time(Gst.CLOCK_TIME_NONE)
         self.pipeline.set_base_time(base_time)
         self.pipeline.use_clock(clock)
 
@@ -527,13 +527,13 @@ class FeedComponent(basecomponent.BaseComponent):
             # make sure the pipeline sticks with this clock
             self.pipeline.use_clock(clock)
 
-            self.clock_provider = gst.NetTimeProvider(clock, None, port)
+            self.clock_provider = Gst.NetTimeProvider(clock, None, port)
             realport = self.clock_provider.get_property('port')
 
             base_time = self.pipeline.get_base_time()
 
             self.debug('provided master clock from %r, base time %s',
-                       clock, gst.TIME_ARGS(base_time))
+                       clock, Gst.TIME_ARGS(base_time))
 
             if self.medium:
                 # FIXME: This isn't always correct. We need a more
@@ -549,9 +549,9 @@ class FeedComponent(basecomponent.BaseComponent):
         assert self.pipeline
         assert not self._clock_slaved
         (ret, state, pending) = self.pipeline.get_state(0)
-        if state != gst.STATE_PAUSED and state != gst.STATE_PLAYING:
+        if state != Gst.State.PAUSED and state != Gst.State.PLAYING:
             self.debug("pipeline still spinning up: %r", state)
-            d = self._change_monitor.add(gst.STATE_CHANGE_READY_TO_PAUSED)
+            d = self._change_monitor.add(Gst.StateChangeReturn.READY_TO_PAUSED)
             d.addCallback(pipelinePaused)
             return d
         elif self.clock_provider:
@@ -571,10 +571,10 @@ class FeedComponent(basecomponent.BaseComponent):
                                filename
         """
         if hasattr(gst, "DEBUG_BIN_TO_DOT_FILE"):
-            method = gst.DEBUG_BIN_TO_DOT_FILE
+            method = Gst.DEBUG_BIN_TO_DOT_FILE
             if with_timestamp:
-                method = gst.DEBUG_BIN_TO_DOT_FILE_WITH_TS
-            method(self.pipeline, gst.DEBUG_GRAPH_SHOW_ALL, filename)
+                method = Gst.DEBUG_BIN_TO_DOT_FILE_WITH_TS
+            method(self.pipeline, Gst.DEBUG_GRAPH_SHOW_ALL, filename)
 
     ### BaseComponent interface implementation
 
@@ -585,7 +585,7 @@ class FeedComponent(basecomponent.BaseComponent):
         eaters have received their file descriptor to eat from.
         """
         (ret, state, pending) = self.pipeline.get_state(0)
-        if state == gst.STATE_PLAYING:
+        if state == Gst.State.PLAYING:
             self.log('already PLAYING')
             if not force:
                 return
@@ -602,7 +602,7 @@ class FeedComponent(basecomponent.BaseComponent):
                 return
 
         self.debug("Setting pipeline %r to GST_STATE_PLAYING", self.pipeline)
-        self.pipeline.set_state(gst.STATE_PLAYING)
+        self.pipeline.set_state(Gst.State.PLAYING)
 
     def _feeder_probe_calllater(self):
         for feedId, feeder in self.feeders.items():
@@ -670,13 +670,13 @@ class FeedComponent(basecomponent.BaseComponent):
             raise errors.PropertyError(msg)
 
         # param enums and enums need to be returned by integer value
-        if isinstance(value, gobject.GEnum):
+        if isinstance(value, GObject.GEnum):
             value = int(value)
 
         return value
 
     def modify_element_property(self, element_name, property_name, value,
-                                mutable_state=gst.STATE_READY,
+                                mutable_state=Gst.State.READY,
                                 needs_reset=False):
         '''
         Sets a property on the fly on a gstreamer element
@@ -687,14 +687,14 @@ class FeedComponent(basecomponent.BaseComponent):
         @type  property_name: str
         @param value: Value to set
         @param mutable_state: Minimum state required to set the property
-        @type  mutable_state: L{gst.Enum}
+        @type  mutable_state: L{Gst.Enum}
         @param needs_reset: Whether setting this property requires sending a
                             'flumotion-reset' event
         @type  needs_reset: bool
         '''
 
         def drop_stream_headers(pad, buf):
-            if buf.flag_is_set(gst.BUFFER_FLAG_IN_CAPS):
+            if buf.flag_is_set(Gst.BUFFER_FLAG_IN_CAPS):
                 return False
             pad.remove_buffer_probe(probes[pad])
             return True
@@ -711,9 +711,9 @@ class FeedComponent(basecomponent.BaseComponent):
 
         # get the peer pad for each sink pad
         sink_pads = [p.get_peer() for p in element.pads()
-                        if p.get_direction() == gst.PAD_SINK]
+                        if p.get_direction() == Gst.PAD_SINK]
         src_pads = [p for p in element.pads()
-                        if p.get_direction() == gst.PAD_SRC]
+                        if p.get_direction() == Gst.PAD_SRC]
 
         # Iterate over all the sink pads and block them
         for pad in sink_pads:
@@ -763,7 +763,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
         self.debug('setting property %s on element %r to %s' %
                    (property, element_name, value))
-        pygobject.gobject_set_property(element, property, value)
+        pyGObject.gobject_set_property(element, property, value)
 
     ### methods to connect component eaters and feeders
 
@@ -790,7 +790,7 @@ class FeedComponent(basecomponent.BaseComponent):
         # We must have a pipeline in READY or above to do this. Do a
         # non-blocking (zero timeout) get_state.
         if (not self.pipeline or
-            self.pipeline.get_state(0)[1] == gst.STATE_NULL):
+            self.pipeline.get_state(0)[1] == Gst.State.NULL):
             self.warning('told to feed %s to fd %d, but pipeline not '
                          'running yet', feedName, fd)
             cleanup(fd)
@@ -853,7 +853,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
         # fdsrc only switches to the new fd in ready or below
         (result, current, pending) = element.get_state(0L)
-        pipeline_playing = current not in [gst.STATE_NULL, gst.STATE_READY]
+        pipeline_playing = current not in [Gst.State.NULL, Gst.State.READY]
         if pipeline_playing:
             self.debug('eater %s in state %r, kidnapping it',
                        eaterAlias, current)
@@ -874,7 +874,7 @@ class FeedComponent(basecomponent.BaseComponent):
             depay = self.get_element(eater.depayName)
 
             def remove_in_caps_buffers(pad, buffer, eater):
-                if buffer.flag_is_set(gst.BUFFER_FLAG_IN_CAPS):
+                if buffer.flag_is_set(Gst.BUFFER_FLAG_IN_CAPS):
                     self.info("We got streamheader buffer which we are "
                               "dropping because we do not want this just "
                               "after a reconnect because it breaks "
@@ -916,7 +916,7 @@ class FeedComponent(basecomponent.BaseComponent):
             parent = element.get_parent()
             parent.remove(element)
             self.log("setting to ready")
-            element.set_state(gst.STATE_READY)
+            element.set_state(Gst.State.READY)
             self.log("setting to ready complete!!!")
             old = element.get_property('fd')
             self.log("Closing old fd %d", old)
@@ -924,7 +924,7 @@ class FeedComponent(basecomponent.BaseComponent):
             element.set_property('fd', fd)
             parent.add(element)
             srcpad.link(sinkpad)
-            element.set_state(gst.STATE_PLAYING)
+            element.set_state(Gst.State.PLAYING)
             # We're done; unblock the pad
             srcpad.set_blocked_async(False, _block_cb)
         else:
