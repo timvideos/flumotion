@@ -137,7 +137,7 @@ def get_plugin_version(plugin_name):
     @rtype: tuple of (major, minor, micro, nano), or None if it could not be
             found or determined
     """
-    plugin = Gst.registry_get_default().find_plugin(plugin_name)
+    plugin = Gst.Registry.get().find_plugin(plugin_name)
 
     if not plugin:
         return None
