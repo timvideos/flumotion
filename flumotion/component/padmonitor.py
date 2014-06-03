@@ -114,18 +114,6 @@ class PadMonitor(log.Loggable):
             """
             self._last_data_time = time.time()
 
-            if not hasattr(Gst, 'TIME_ARGS'):
-                def TIME_ARGS(time):
-                    if time == Gst.CLOCK_TIME_NONE:
-                        return 'CLOCK_TIME_NONE'
-
-                    return '%u:%02u:%02u.%09u' % (time / (Gst.SECOND * 60 * 60),
-                                                    (time / (Gst.SECOND * 60)) % 60,
-                                                    (time / (Gst.SECOND) % 60),
-                                                    time % Gst.SECOND)
-
-                Gst.TIME_ARGS = TIME_ARGS
-
             self.logMessage('buffer probe on %s has timestamp %s', self.name,
                             Gst.TIME_ARGS(buffer.get_buffer().pts))
 
