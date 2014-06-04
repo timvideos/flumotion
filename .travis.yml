@@ -16,7 +16,7 @@ install:
 script:
  - ./autogen.sh
  - make
- - trial -rselect flumotion.$TEST_TYPE
+ - ./run_tests.sh
 # specified which branches to test
 branches:
   only:
