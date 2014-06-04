@@ -1,0 +1,5 @@
+test_common_gstreamer
+test_common_pygobject
+test_component_feeder
+test_component_padmonitor
+test_component_feedcomponent
