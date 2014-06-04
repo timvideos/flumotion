@@ -12,6 +12,12 @@ before_install:
 install:
  - sudo apt-get install -qq subversion autopoint python-gst0.10 gstreamer0.10* python-gi python3-gi gstreamer1.0* gir1.2-gstreamer-1.0 gir1.2-gst-plugins-base-1.0 libglib2.0-dev gir1.2-glib-2.0 libgirepository1.0-dev libglib2.0-0 gir1.2-gtk-3 libxml-parser-perl python-twisted python-gtk2 python-glade2 python-kiwi pkg-config libglib2.0-dev liborc-0.4-dev bison flex
  - sudo pip install icalendar==2.2 pyparsing python-dateutil
+ - wget https://launchpadlibrarian.net/170386464/gst-python1.0_1.2.0.orig.tar.gz
+ - tar xvzf gst-python1.0_1.2.0.orig.tar.gz
+ - cd gst-python-1.2.0/
+ - ./configure
+ - make
+ - sudo make install
 # command to run tests
 script:
  - ./autogen.sh
