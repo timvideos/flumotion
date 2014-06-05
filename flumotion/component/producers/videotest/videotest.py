@@ -15,7 +15,7 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
+from gi.repository import Gst
 
 from flumotion.common import errors, gstreamer, messages
 from flumotion.common.i18n import N_, gettexter
@@ -39,31 +39,31 @@ class VideoTest(feedcomponent.ParseLaunchComponent):
         self.uiState.addKey('pattern', 0)
 
     def get_pipeline_string(self, properties):
-        capsString = properties.get('format', 'video/x-raw-yuv')
+        capsString = properties.get('format', 'video/x-raw')
 
-        if capsString == 'video/x-raw-yuv':
-            capsString = '%s,format=(fourcc)I420' % capsString
+        if capsString == 'video/x-raw':
+            capsString = '%s,format=(string)I420' % capsString
 
         # Filtered caps
-        struct = gst.structure_from_string(capsString)
+        struct = Gst.structure_from_string(capsString)[0]
         for k in 'width', 'height':
             if k in properties:
-                struct[k] = properties[k]
+                struct.set_value(k, properties[k])
 
         if 'framerate' in properties:
             framerate = properties['framerate']
-            struct['framerate'] = gst.Fraction(framerate[0], framerate[1])
+            struct.set_value('framerate', Gst.Fraction(framerate[0]/framerate[1]))
 
         # always set par
-        struct['pixel-aspect-ratio']= gst.Fraction(1, 1)
+        struct.set_value('pixel-aspect-ratio', Gst.Fraction(1/1))
         if 'pixel-aspect-ratio' in properties:
             par = properties['pixel-aspect-ratio']
-            struct['pixel-aspect-ratio'] = gst.Fraction(par[0], par[1])
+            struct.set_value('pixel-aspect-ratio', Gst.Fraction(par[0]/par[1]))
 
         # If RGB, set something ffmpegcolorspace can convert.
         if capsString == 'video/x-raw-rgb':
-            struct['red_mask'] = 0xff00
-        caps = gst.Caps(struct)
+            struct.set_value('red_mask', 0xff00)
+        caps = Gst.Caps.from_string(struct.to_string())
 
         is_live = 'is-live=true'
 
