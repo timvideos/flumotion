@@ -17,6 +17,7 @@
 
 from gi.repository import Gst
 from gi.repository import GObject
+from gi.repository import GstNet
 
 import os
 import time
@@ -129,7 +130,7 @@ class FeedComponent(basecomponent.BaseComponent):
         self.try_start_pipeline()
 
         # no race, messages marshalled asynchronously via the bus
-        d = self._change_monitor.add(Gst.StateChangeReturn.PAUSED_TO_PLAYING)
+        d = self._change_monitor.add(Gst.StateChange.PAUSED_TO_PLAYING)
         d.addCallback(lambda x: self.do_pipeline_playing())
 
     def setup_completed(self):
@@ -249,8 +250,8 @@ class FeedComponent(basecomponent.BaseComponent):
                 old, new, pending = message.parse_state_changed()
                 self._change_monitor.state_changed(old, new)
                 dump_filename = "%s.%s_%s" % (self.name,
-                    Gst.element_state_get_name(old),
-                    Gst.element_state_get_name(new))
+                    Gst.Element.state_get_name(old),
+                    Gst.Element.state_get_name(new))
                 self.dump_gstreamer_debug_dot_file(dump_filename, True)
 
         def error():
@@ -495,7 +496,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
         self._master_clock_info = ip, port, base_time
 
-        clock = Gst.NetClientClock(None, ip, port, base_time)
+        clock = GstNet.NetClientClock.new(None, ip, port, base_time)
         # disable the pipeline's management of base_time -- we're going
         # to set it ourselves.
         self.pipeline.set_new_stream_time(Gst.CLOCK_TIME_NONE)
@@ -527,7 +528,7 @@ class FeedComponent(basecomponent.BaseComponent):
             # make sure the pipeline sticks with this clock
             self.pipeline.use_clock(clock)
 
-            self.clock_provider = Gst.NetTimeProvider(clock, None, port)
+            self.clock_provider = GstNet.NetTimeProvider.new(clock, None, port)
             realport = self.clock_provider.get_property('port')
 
             base_time = self.pipeline.get_base_time()
@@ -570,7 +571,7 @@ class FeedComponent(basecomponent.BaseComponent):
         @param with_timestamp: if True, then timestamp will be prepended to
                                filename
         """
-        if hasattr(gst, "DEBUG_BIN_TO_DOT_FILE"):
+        if hasattr(Gst, "DEBUG_BIN_TO_DOT_FILE"):
             method = Gst.DEBUG_BIN_TO_DOT_FILE
             if with_timestamp:
                 method = Gst.DEBUG_BIN_TO_DOT_FILE_WITH_TS
@@ -763,7 +764,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
         self.debug('setting property %s on element %r to %s' %
                    (property, element_name, value))
-        pyGObject.gobject_set_property(element, property, value)
+        pygobject.gobject_set_property(element, property, value)
 
     ### methods to connect component eaters and feeders
 
