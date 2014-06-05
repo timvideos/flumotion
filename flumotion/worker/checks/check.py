@@ -16,8 +16,9 @@
 # Headers in this file shall remain intact.
 
 import os
-
-import gst
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst
 from twisted.internet import defer
 
 from flumotion.common import documentation, errors, gstreamer, log, messages
@@ -45,25 +46,25 @@ def handleGStreamerDeviceError(failure, device, mid=None):
                 gerror.message, gerror.domain, gerror.code, debug))
 
         if gerror.domain == "gst-resource-error-quark":
-            if gerror.code == int(gst.RESOURCE_ERROR_OPEN_READ):
+            if gerror.code == int(Gst.ResourceError.OPEN_READ):
                 m = messages.Error(T_(
                     N_("Could not open device '%s' for reading.  "
                        "Check permissions on the device."), device), mid=mid)
                 documentation.messageAddFixBadPermissions(m)
-            if gerror.code == int(gst.RESOURCE_ERROR_OPEN_WRITE):
+            if gerror.code == int(Gst.ResourceError.OPEN_WRITE):
                 m = messages.Error(T_(
                     N_("Could not open device '%s' for writing.  "
                        "Check permissions on the device."), device), mid=mid)
                 documentation.messageAddFixBadPermissions(m)
-            elif gerror.code == int(gst.RESOURCE_ERROR_OPEN_READ_WRITE):
+            elif gerror.code == int(Gst.ResourceError.OPEN_READ_WRITE):
                 m = messages.Error(T_(
                     N_("Could not open device '%s'.  "
                        "Check permissions on the device."), device), mid=mid)
                 documentation.messageAddFixBadPermissions(m)
-            elif gerror.code == int(gst.RESOURCE_ERROR_BUSY):
+            elif gerror.code == int(Gst.ResourceError.BUSY):
                 m = messages.Error(T_(
                     N_("Device '%s' is already in use."), device), mid=mid)
-            elif gerror.code == int(gst.RESOURCE_ERROR_SETTINGS):
+            elif gerror.code == int(Gst.ResourceError.SETTINGS):
                 m = messages.Error(T_(
                     N_("Device '%s' did not accept the requested settings."),
                     device),
@@ -126,7 +127,7 @@ def errbackResult(failure, result, mid, device):
 def errbackNotFoundResult(failure, result, mid, device):
     """
     I am an errback to add to a do_element_check deferred
-    to check for RESOURCE_ERROR_NOT_FOUND, and add a message to the result.
+    to check for ResourceError.NOT_FOUND, and add a message to the result.
 
     @param mid: the id to set on the message
     """
@@ -134,7 +135,7 @@ def errbackNotFoundResult(failure, result, mid, device):
     source, gerror, debug = failure.value.args
 
     if gerror.domain == "gst-resource-error-quark" and \
-        gerror.code == int(gst.RESOURCE_ERROR_NOT_FOUND):
+        gerror.code == int(Gst.ResourceError.NOT_FOUND):
         m = messages.Warning(T_(
             N_("No device found on %s."), device), mid=mid)
         result.add(m)
@@ -164,9 +165,9 @@ def checkElements(elementNames):
     ret = []
     for name in elementNames:
         try:
-            gst.element_factory_make(name)
+            Gst.ElementFactory.make(name)
             ret.append(name)
-        except gst.PluginNotFoundError:
+        except Gst.PluginNotFoundError:
             log.debug('check', 'no plugin found for element factory %s', name)
             pass
     log.debug('check', 'checkElements: returning elements names %r', ret)
@@ -253,7 +254,7 @@ def checkMediaFile(filePath, mimetype=None, audio=True, video=True):
         result.succeed((True, properties))
         return d.callback(result)
 
-    from gst.extend import discoverer
+    from Gst.extend import discoverer
     dcv = discoverer.Discoverer(filePath)
     dcv.connect('discovered', discovered)
     dcv.discover()
@@ -290,7 +291,7 @@ def checkPlugin(pluginName, packageName, minimumVersion=None,
         documentation.messageAddGStreamerInstall(m)
         result.add(m)
     elif featureName:
-        r = gst.registry_get_default()
+        r = Gst.Registry.get()
         features = r.get_feature_list_by_plugin(pluginName)
         byname = dict([(f.get_name(), f) for f in features])
         if (featureName not in byname
