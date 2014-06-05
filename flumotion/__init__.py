@@ -14,17 +14,3 @@
 # See "LICENSE.LGPL" in the source distribution for more information.
 #
 # Headers in this file shall remain intact.
-
-from gi.repository import Gst
-
-if not hasattr(Gst, 'TIME_ARGS'):
-    def TIME_ARGS(time):
-        if time == Gst.CLOCK_TIME_NONE:
-            return 'CLOCK_TIME_NONE'
-
-        return '%u:%02u:%02u.%09u' % (time / (Gst.SECOND * 60 * 60),
-                                        (time / (Gst.SECOND * 60)) % 60,
-                                        (time / (Gst.SECOND) % 60),
-                                        time % Gst.SECOND)
-
-    Gst.TIME_ARGS = TIME_ARGS
