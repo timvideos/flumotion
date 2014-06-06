@@ -406,7 +406,7 @@ class FeedComponent(basecomponent.BaseComponent):
         bus.add_signal_watch()
         self.bus_signal_id = bus.connect('message',
             self.bus_message_received_cb)
-        sig_id = self.pipeline.connect('deep-notify',
+        sig_id = self.pipeline.connect('deep-notify::pspec',
                                        gstreamer.verbose_deep_notify_cb, self)
         self.pipeline_signals.append(sig_id)
 
