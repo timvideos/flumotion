@@ -1,0 +1,27 @@
+<planet name="example-planet">
+
+  <manager name="example-planet-manager">
+    <component name="manager-bouncer" type="htpasswdcrypt-bouncer">
+      <property name="data">user:PSfNpHTkpTx1M</property>
+    </component>
+  </manager>
+
+  <atmosphere>
+  </atmosphere>
+  
+  <flow name="default">
+    <component name="producer-video"
+               type="videotest-producer"
+               label="producer-video"
+               worker="localhost"
+               project="flumotion"
+               version="0.11.0.1">
+      <property name="pattern">0</property>
+      <property name="framerate">50/10</property>
+      <property name="width">320</property>
+      <property name="height">240</property>
+      <clock-master>false</clock-master>
+    </component>
+  </flow>
+
+</planet>
