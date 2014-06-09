@@ -165,7 +165,7 @@ class FeedComponent(basecomponent.BaseComponent):
         if not element:
             raise errors.ComponentError("No such feeder %s" % feederName)
 
-        pad = element.get_pad('src')
+        pad = element.get_static_pad('src')
         self._pad_monitors.attach(pad, "%s:%s" % (self.name, elementName))
 
     def attachPadMonitorToElement(self, elementName,
@@ -173,7 +173,7 @@ class FeedComponent(basecomponent.BaseComponent):
         element = self.pipeline.get_by_name(elementName)
         if not element:
             raise errors.ComponentError("No such element %s" % elementName)
-        pad = element.get_pad('src')
+        pad = element.get_static_pad('src')
         name = "%s:%s" % (self.name, elementName)
         self._pad_monitors.attach(pad, name)
 
@@ -306,7 +306,7 @@ class FeedComponent(basecomponent.BaseComponent):
             name = src.get_name()
             if name in eaterWatchElements:
                 eater = eaterWatchElements[name]
-                s = message.structure
+                s = message.get_structure()
 
                 def timestampDiscont():
                     prevTs = s["prev-timestamp"]
@@ -356,10 +356,10 @@ class FeedComponent(basecomponent.BaseComponent):
 
     def install_eater_event_probes(self, eater):
 
-        def fdsrc_event(pad, event):
+        def fdsrc_event(pad, event, user_data):
             # An event probe used to consume unwanted EOS events on eaters.
             # Called from GStreamer threads.
-            if event.type == Gst.EVENT_EOS:
+            if event.type == Gst.EventType.EOS:
                 self.info('End of stream for eater %s, disconnect will be '
                           'triggered', eater.eaterAlias)
                 # We swallow it because otherwise our component acts on the EOS
@@ -368,11 +368,11 @@ class FeedComponent(basecomponent.BaseComponent):
                 return False
             return True
 
-        def depay_event(pad, event):
+        def depay_event(pad, event, user_data):
             # An event probe used to consume unwanted duplicate
             # newsegment events.
             # Called from GStreamer threads.
-            if event.type == Gst.EVENT_NEWSEGMENT:
+            if event.type == Gst.EventType.SEGMENT:
                 # We do this because we know gdppay/gdpdepay screw up on 2nd
                 # newsegments (unclear what the original reason for this
                 # was, perhaps #349204)
@@ -393,9 +393,11 @@ class FeedComponent(basecomponent.BaseComponent):
 
         self.debug('adding event probe for eater %s', eater.eaterAlias)
         fdsrc = self.get_element(eater.elementName)
-        fdsrc.get_pad("src").add_event_probe(fdsrc_event)
+        fdsrc.get_static_pad("src").add_probe(Gst.PadProbeType.EVENT_BOTH,
+                                                        fdsrc_event, None)
         depay = self.get_element(eater.depayName)
-        depay.get_pad("src").add_event_probe(depay_event)
+        depay.get_static_pad("src").add_probe(Gst.PadProbeType.EVENT_BOTH,
+                                                        depay_event, None)
 
     def _setup_pipeline(self):
         self.debug('setup_pipeline()')
@@ -433,7 +435,7 @@ class FeedComponent(basecomponent.BaseComponent):
 
         for eater in self.eaters.values():
             self.install_eater_event_probes(eater)
-            pad = self.get_element(eater.elementName).get_pad('src')
+            pad = self.get_element(eater.elementName).get_static_pad('src')
             name = "%s:%s" % (self.name, eater.elementName)
             self._pad_monitors.attach(pad, name,
                                       padmonitor.EaterPadMonitor,
@@ -612,7 +614,7 @@ class FeedComponent(basecomponent.BaseComponent):
                 # a currently disconnected client will have fd None
                 if client.fd is not None:
                     array = feederElement.emit('get-stats', client.fd)
-                    if len(array) == 0:
+                    if array.n_fields() == 0:
                         # There is an unavoidable race here: we can't know
                         # whether the fd has been removed from multifdsink.
                         # However, if we call get-stats on an fd that
@@ -697,7 +699,7 @@ class FeedComponent(basecomponent.BaseComponent):
         def drop_stream_headers(pad, buf):
             if buf.flag_is_set(Gst.BUFFER_FLAG_IN_CAPS):
                 return False
-            pad.remove_buffer_probe(probes[pad])
+            pad.remove_probe(probes[pad])
             return True
 
         probes = {}
@@ -743,7 +745,8 @@ class FeedComponent(basecomponent.BaseComponent):
         # re-sending the headers again)
         else:
             for pad in src_pads:
-                probes[pad] = pad.add_buffer_probe(drop_stream_headers)
+                probes[pad] = pad.add_probe(Gst.PadProbeType.BUFFER,
+                                                drop_stream_headers, None)
 
         if state > mutable_state:
             element.set_state(state)
@@ -865,7 +868,7 @@ class FeedComponent(basecomponent.BaseComponent):
             # To do this safely, we first block fdsrc:src, then let the
             # component do any neccesary unlocking (needed for multi-input
             # elements)
-            srcpad = element.get_pad('src')
+            srcpad = element.get_static_pad('src')
 
             def _block_cb(pad, blocked):
                 pass
@@ -889,7 +892,7 @@ class FeedComponent(basecomponent.BaseComponent):
                 if eater.streamheaderBufferProbeHandler:
                     self.log("Removing buffer probe on depay src pad on "
                              "eater %r", eater)
-                    pad.remove_buffer_probe(
+                    pad.remove_probe(
                         eater.streamheaderBufferProbeHandler)
                     eater.streamheaderBufferProbeHandler = None
                 else:
@@ -906,8 +909,8 @@ class FeedComponent(basecomponent.BaseComponent):
                     self.log("Adding buffer probe on depay src pad on "
                              "eater %r", eater)
                     eater.streamheaderBufferProbeHandler = \
-                            depay.get_pad("src").add_buffer_probe(
-                                remove_in_caps_buffers, eater)
+                            depay.get_static_pad("src").add_probe(
+                                    Gst.PadProbeType.BUFFER, remove_in_caps_buffers, eater)
 
             self.unblock_eater(eaterAlias)
 

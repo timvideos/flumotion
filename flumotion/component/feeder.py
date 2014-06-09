@@ -145,14 +145,14 @@ class FeederClient:
         """
         @type stats: list
         """
-        bytesSent = stats[0]
+        bytesSent = stats["bytes-sent"]
         #timeAdded = stats[1]
         #timeRemoved = stats[2]
         #timeActive = stats[3]
-        timeLastActivity = float(stats[4]) / Gst.SECOND
-        if len(stats) > 5:
+        timeLastActivity = float(stats["last-activitity-time"]) / Gst.SECOND
+        if stats.n_fields() > 5:
             # added in gst-plugins-base 0.10.11
-            buffersDropped = stats[5]
+            buffersDropped = stats["buffers-dropped"]
         else:
             # We don't know, but we cannot use None
             # since that would break integer addition below
