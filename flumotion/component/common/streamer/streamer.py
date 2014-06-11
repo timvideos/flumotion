@@ -16,8 +16,9 @@
 # Headers in this file shall remain intact.
 
 import time
-
-import gst
+import gi
+gi.require_version('Gst', '1.0')
+from gi.repository import Gst
 
 from twisted.cred import credentials
 from twisted.internet import reactor, error, defer
@@ -35,6 +36,8 @@ from flumotion.component.misc.porter import porterclient
 from flumotion.twisted import fdserver
 
 from flumotion.common.i18n import N_, gettexter
+
+Gst.init(None)
 
 __all__ = ['HTTPMedium']
 __version__ = "$Rev$"
@@ -405,7 +408,7 @@ class Streamer(feedcomponent.ParseLaunchComponent, Stats):
             self.resource.setLogFilter(logFilter)
 
         if 'timeout' in properties:
-            self.timeout = properties['timeout'] * gst.SECOND
+            self.timeout = properties['timeout'] * Gst.SECOND
 
         self.type = properties.get('type', 'master')
         if self.type == 'slave':
