@@ -7,6 +7,17 @@
   </manager>
 
   <atmosphere>
+    <component name="porter-http"
+               type="porter"
+               label="porter-http"
+               worker="localhost"
+               project="flumotion"
+               version="0.11.0.1">
+      <property name="username">pycBUhaLQlwt</property>
+      <property name="socket-path">flu-KbVvOp.socket</property>
+      <property name="password">nWbDPQzKKrMa</property>
+      <property name="port">8800</property>
+    </component>
   </atmosphere>
   
   <flow name="default">
@@ -21,6 +32,50 @@
       <property name="width">320</property>
       <property name="height">240</property>
       <clock-master>false</clock-master>
+    </component>
+
+    <component name="encoder-video"
+               type="theora-encoder"
+               label="encoder-video"
+               worker="localhost"
+               project="flumotion"
+               version="0.11.0.1">
+      <eater name="default">
+        <feed alias="default">producer-video</feed>
+      </eater>
+      <property name="bitrate">400000</property>
+    </component>
+
+    <component name="muxer-video"
+               type="ogg-muxer"
+               label="muxer-video"
+               worker="localhost"
+               project="flumotion"
+               version="0.11.0.1">
+      <eater name="default">
+        <feed alias="default">encoder-video</feed>
+      </eater>
+      <clock-master>false</clock-master>
+    </component>
+
+    <component name="http-video"
+               type="http-streamer"
+               label="http-video"
+               worker="localhost"
+               project="flumotion"
+               version="0.11.0.1">
+      <eater name="default">
+        <feed alias="default">muxer-video</feed>
+      </eater>
+      <property name="bandwidth-limit">10</property>
+      <property name="burst-on-connect">True</property>
+      <property name="client-limit">1024</property>
+      <property name="porter-username">pycBUhaLQlwt</property>
+      <property name="mount-point">/ogg-video/</property>
+      <property name="port">8800</property>
+      <property name="type">slave</property>
+      <property name="porter-socket-path">flu-KbVvOp.socket</property>
+      <property name="porter-password">nWbDPQzKKrMa</property>
     </component>
   </flow>
 
