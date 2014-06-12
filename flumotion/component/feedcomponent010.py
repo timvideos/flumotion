@@ -271,7 +271,7 @@ class FeedComponent(basecomponent.BaseComponent):
                         self.__class__, msg))
 
             self.state.append('messages', m)
-            self._change_monitor.have_error(self.pipeline.get_state(),
+            self._change_monitor.have_error(self.pipeline.get_state(0),
                                             message)
 
         def eos():
@@ -498,10 +498,10 @@ class FeedComponent(basecomponent.BaseComponent):
 
         self._master_clock_info = ip, port, base_time
 
-        clock = GstNet.NetClientClock.new(None, ip, port, base_time)
+        clock = GstNet.NetClientClock.new("clock", ip, port, base_time)
         # disable the pipeline's management of base_time -- we're going
         # to set it ourselves.
-        self.pipeline.set_new_stream_time(Gst.CLOCK_TIME_NONE)
+        self.pipeline.set_start_time(Gst.CLOCK_TIME_NONE)
         self.pipeline.set_base_time(base_time)
         self.pipeline.use_clock(clock)
 
@@ -870,9 +870,10 @@ class FeedComponent(basecomponent.BaseComponent):
             # elements)
             srcpad = element.get_static_pad('src')
 
-            def _block_cb(pad, blocked):
+            def _block_cb(pad, blocked, user_data):
                 pass
-            srcpad.set_blocked_async(True, _block_cb)
+            blocked_probe = srcpad.add_probe(Gst.PadProbeType.BLOCK, _block_cb, None)
+
             # add buffer probe to drop buffers that are flagged as IN_CAPS
             # needs to be done to gdpdepay's src pad
             depay = self.get_element(eater.depayName)
@@ -930,7 +931,7 @@ class FeedComponent(basecomponent.BaseComponent):
             srcpad.link(sinkpad)
             element.set_state(Gst.State.PLAYING)
             # We're done; unblock the pad
-            srcpad.set_blocked_async(False, _block_cb)
+            srcpad.remove_probe(blocked_probe)
         else:
             element.set_property('fd', fd)
 

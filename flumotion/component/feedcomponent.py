@@ -679,13 +679,13 @@ class MultiInputParseLaunchComponent(ParseLaunchComponent):
             # the queue lock when this is called, so we block our sinkpad,
             # then re-check the current level.
             pad = element.get_static_pad("sink")
-            pad.set_blocked_async(True, _block_cb)
+            blocked_probe = pad.add_probe(Gst.PadProbeType.BLOCK, _block_cb, None)
             level = element.get_property("current-level-buffers")
             if level < self.QUEUE_SIZE_BUFFERS:
                 element.set_property('max-size-buffers',
                     self.QUEUE_SIZE_BUFFERS)
                 element.disconnect(signalid)
-            pad.set_blocked_async(False, _block_cb)
+            pad.remove_probe(blocked_probe)
 
         signalid = queue.connect("underrun", _underrun_cb)
 
@@ -742,7 +742,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
         # FIXME: Add documentation
 
         def output_reset_event(pad, event):
-            if event.type != Gst.EVENT_FLUSH_START:
+            if event.type != Gst.EventType.FLUSH_START:
                 return True
 
             self.debug('RESET: out reset event received on output pad %r', pad)
@@ -761,7 +761,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
             return False
 
         def got_new_caps(pad, args):
-            caps = pad.get_negotiated_caps()
+            caps = pad.get_current_caps()
             if not caps:
                 self.debug("RESET: Caps unset! Looks like we're stopping")
                 return
@@ -813,6 +813,8 @@ class ReconfigurableComponent(ParseLaunchComponent):
             elem.get_static_pad('sink').add_probe(Gst.PadProbeType.EVENT_BOTH,
                                                         output_reset_event)
 
+    blocked_eater_probes = []
+
     def _block_eaters(self):
         """
         Function that blocks all the identities of the eaters
@@ -820,13 +822,14 @@ class ReconfigurableComponent(ParseLaunchComponent):
         for elem in self.get_input_elements():
             pad = elem.get_static_pad('src')
             self.debug("RESET: Blocking pad %s", pad)
-            pad.set_blocked_async(True, self._on_eater_blocked)
+            blocked_eater_probes.append(pad.add_probe(
+                            Gst.PadProbeType.BLOCK, self._on_eater_blocked, None))
 
     def _unblock_eaters(self):
-        for elem in self.get_input_elements():
+        for i, elem in enumerate(self.get_input_elements()):
             pad = elem.get_static_pad('src')
             self.debug("RESET: Unblocking pad %s", pad)
-            pad.set_blocked_async(False, self._on_eater_blocked)
+            pad.remove_probe(blocked_eater_probes[i])
 
     def _unlink_pads(self, element, directions):
         for pad in element.pads():
@@ -943,7 +946,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
         self._on_pad_blocked(pad, blocked)
         if blocked:
             peer = pad.get_peer()
-            peer.send_event(Gst.event_new_flush_start())
+            peer.send_event(Gst.Event.new_flush_start())
             #peer.send_event(Gst.event_new_eos())
             #self._unlink_pads(pad.get_parent(), [Gst.PAD_SRC])
 
@@ -992,9 +995,12 @@ class MuxerComponent(MultiInputParseLaunchComponent):
     def get_link_pad(self, muxer, srcpad, caps):
         return muxer.get_compatible_pad(srcpad, caps)
 
-    def buffer_probe_cb(self, pad, buffer, depay, eaterAlias):
+    global blocked_probes
+    blocked_probes = []
+
+    def buffer_probe_cb(self, pad, buffer, (depay, eaterAlias)):
         pad = depay.get_static_pad("src")
-        caps = pad.get_negotiated_caps()
+        caps = pad.get_current_caps()
         if not caps:
             return False
         srcpad_to_link = self.get_eater_srcpad(eaterAlias)
@@ -1018,11 +1024,13 @@ class MuxerComponent(MultiInputParseLaunchComponent):
         if srcpad_to_link.is_blocked():
             self.is_blocked_cb(srcpad_to_link, True)
         else:
-            srcpad_to_link.set_blocked_async(True, self.is_blocked_cb)
+            blocked_probes.append(srcpad_to_link.add_probe(
+                        Gst.PadProbeType.BLOCK, self.is_blocked_cb, eaterAlias))
         return True
 
-    def event_probe_cb(self, pad, event, depay, eaterAlias):
-        caps = pad.get_negotiated_caps()
+    def event_probe_cb(self, pad, event, (depay, eaterAlias)):
+        event = event.get_event()
+        caps = pad.get_current_caps()
         if caps is None:
             return True
         # if this pad doesn't push audio, remove the probe
@@ -1042,7 +1050,7 @@ class MuxerComponent(MultiInputParseLaunchComponent):
         # sink pads with input data
         # gone are the days when we know we only have one pad template in
         # muxers
-        self.fired_eaters = 0
+        self.fired_eaters = []
         self._probes = {} # depay element -> id
         self._eprobes = {} # depay element -> id
 
@@ -1050,20 +1058,21 @@ class MuxerComponent(MultiInputParseLaunchComponent):
             depay = self.get_element(self.eaters[e].depayName)
             self._probes[e] = \
                 depay.get_static_pad("src").add_probe(Gst.PadProbeType.BUFFER,
-                    self.buffer_probe_cb, depay, e)
+                    self.buffer_probe_cb, (depay, e))
             # Add an event probe to drop GstForceKeyUnit events
             # in audio pads
             if self.dropAudioKuEvents:
                 self._eprobes[e] = \
                     depay.get_static_pad("src").add_probe(Gst.PadProbeType.EVENT_BOTH,
-                        self.event_probe_cb, depay, e)
+                        self.event_probe_cb, (depay, e))
 
-    def is_blocked_cb(self, pad, is_blocked):
+    def is_blocked_cb(self, pad, is_blocked, eaterAlias):
         if is_blocked:
-            self.fired_eaters = self.fired_eaters + 1
-            if self.fired_eaters == len(self.eaters):
+            if eaterAlias not in self.fired_eaters:
+                self.fired_eaters.append(eaterAlias)
+            if len(self.fired_eaters) == len(self.eaters):
                 self.debug("All pads are now blocked")
                 self.disconnectedPads = False
-                for e in self.eaters:
+                for i, e in enumerate(self.eaters):
                     srcpad = self.get_eater_srcpad(e)
-                    srcpad.set_blocked_async(False, self.is_blocked_cb)
+                    srcpad.remove_probe(blocked_probes[i])
