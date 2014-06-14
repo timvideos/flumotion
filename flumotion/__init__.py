@@ -14,3 +14,7 @@
 # See "LICENSE.LGPL" in the source distribution for more information.
 #
 # Headers in this file shall remain intact.
+
+from gi.repository import Gst
+
+Gst.CLOCK_TIME_NONE = 18446744073709551615L
