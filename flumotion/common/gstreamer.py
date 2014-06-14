@@ -121,8 +121,8 @@ def element_factory_exists(name):
 
     @rtype: boolean
     """
-    registry = Gst.registry_get_default()
-    factory = registry.find_feature(name, Gst.TYPE_ELEMENT_FACTORY)
+    registry = Gst.Registry.get()
+    factory = registry.lookup_feature(name)
 
     if factory:
         return True
