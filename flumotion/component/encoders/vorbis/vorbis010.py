@@ -15,7 +15,7 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
+from gi.repository import Gst
 
 from flumotion.common import gstreamer
 from flumotion.component import feedcomponent
@@ -63,13 +63,13 @@ class Vorbis(feedcomponent.EncoderComponent):
         else:
             enc.set_property('quality', self.quality)
 
-        pad = ar.get_pad('sink')
+        pad = ar.get_static_pad('sink')
         handle = None
 
-        def buffer_probe(pad, buffer):
+        def buffer_probe(pad, buffer, user_data):
             # this comes from another thread
-            caps = buffer.get_caps()
-            in_rate = caps[0]['rate']
+            caps = pad.get_current_caps()
+            in_rate = caps.get_structure(0).get_int('rate')[1]
 
             # now do necessary filtercaps
             self.rate = in_rate
@@ -84,14 +84,14 @@ class Vorbis(feedcomponent.EncoderComponent):
                         in_rate, maxsamplerate, self.bitrate, self.rate))
 
 
-            caps_str = 'audio/x-raw-float, rate=%d, channels=%d' % (self.rate,
+            caps_str = 'audio/x-raw, rate=%d, channels=%d' % (self.rate,
                         self.channels)
             cf.set_property('caps',
-                            gst.caps_from_string(caps_str))
-            pad.remove_buffer_probe(handle)
+                            Gst.Caps.from_string(caps_str))
+            pad.remove_probe(handle)
             return True
 
-        handle = pad.add_buffer_probe(buffer_probe)
+        handle = pad.add_probe(Gst.PadProbeType.BUFFER, buffer_probe, None)
 
     def modify_property_Bitrate(self, value):
         if not self.checkPropertyType('bitrate', value, int):

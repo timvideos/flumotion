@@ -15,7 +15,7 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
+from gi.repository import Gst
 
 from vorbis010 import Vorbis
 
