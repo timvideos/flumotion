@@ -64,8 +64,8 @@ class Volume(feedcomponent.Effect):
         @param bus: the message bus sending the message
         @param message: the message received
         """
-        if message.structure.get_name() == 'level':
-            s = message.structure
+        if message.get_structure().get_name() == 'level':
+            s = message.get_structure()
             peak = list(s['peak'])
             decay = list(s['decay'])
             rms = list(s['rms'])
