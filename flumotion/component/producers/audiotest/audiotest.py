@@ -15,7 +15,7 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
+from gi.repository import Gst
 
 from twisted.internet import defer
 
@@ -74,7 +74,7 @@ class AudioTest(feedcomponent.ParseLaunchComponent):
 
         return ('%s name=source wave=%s %s ! ' \
             'identity name=identity silent=TRUE ! ' \
-            'audio/x-raw-int,rate=%d ! ' \
+            'audio/x-raw,rate=%d ! ' \
             'volume name=volume volume=%f ! level name=level'
                 % (source, wave, is_live, samplerate, volume))
 
