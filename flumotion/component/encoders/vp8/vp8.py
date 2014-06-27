@@ -46,16 +46,15 @@ class VP8(feedcomponent.EncoderComponent):
         check_limit('threads', 1, 64)
 
     def get_pipeline_string(self, properties):
-        return "ffmpegcolorspace ! vp8enc name=encoder"
+        return "videoconvert ! vp8enc name=encoder"
 
     def configure_pipeline(self, pipeline, properties):
         element = pipeline.get_by_name('encoder')
 
-        props = (('bitrate', 'bitrate', 400),
-                 ('quality', 'quality', None),
-                 ('speed', 'speed', 2),
+        props = (('bitrate', 'target-bitrate', 400),
+                 ('quality', 'cq-level', None),
                  ('threads', 'threads', 4),
-                 ('keyframe-maxdistance', 'max-keyframe-distance', 50))
+                 ('keyframe-maxdistance', 'keyframe-max-dist', 50))
 
         for pproperty, eproperty, default in props:
             if eproperty is None:
