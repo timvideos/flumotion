@@ -29,7 +29,6 @@ from flumotion.admin import connections, admin
 from flumotion.monitor.nagios import util
 
 from flumotion.admin.command import component, manager, worker, common
-
 from flumotion.common.common import version
 
 __version__ = "$Rev: 6562 $"
