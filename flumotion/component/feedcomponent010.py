@@ -359,7 +359,7 @@ class FeedComponent(basecomponent.BaseComponent):
         def fdsrc_event(pad, event, user_data):
             # An event probe used to consume unwanted EOS events on eaters.
             # Called from GStreamer threads.
-            if event.type == Gst.EventType.EOS:
+            if event.get_event().type == Gst.EventType.EOS:
                 self.info('End of stream for eater %s, disconnect will be '
                           'triggered', eater.eaterAlias)
                 # We swallow it because otherwise our component acts on the EOS

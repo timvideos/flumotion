@@ -22,7 +22,7 @@ import tempfile
 import datetime as dt
 import bisect
 
-import gst
+from gi.repository import Gst
 
 from twisted.internet import reactor
 
@@ -404,7 +404,7 @@ class Disker(feedcomponent.ParseLaunchComponent, log.Loggable):
 
     componentMediumClass = DiskerMedium
     checkOffset = True
-    pipe_template = 'multifdsink name=fdsink sync-method=2 mode=1 sync=false'
+    pipe_template = 'multifdsink name=fdsink sync-method=2 sync=false'
     file = None
     directory = None
     location = None
@@ -585,7 +585,7 @@ class Disker(feedcomponent.ParseLaunchComponent, log.Loggable):
         else:
             self.debug("resend-streamheader property not available, "
                        "resending streamheader when it changes in the caps")
-        sink.get_pad('sink').connect('notify::caps', self._notify_caps_cb)
+        sink.get_static_pad('sink').connect('notify::caps', self._notify_caps_cb)
         # connect to client-removed so we can detect errors in file writing
         sink.connect('client-removed', self._client_removed_cb)
 
@@ -597,7 +597,7 @@ class Disker(feedcomponent.ParseLaunchComponent, log.Loggable):
             self._markerPrefix = pfx
 
         if self.reactToMarks or self.writeIndex or self.syncOnTdt:
-            sink.get_pad("sink").add_data_probe(self._src_pad_probe)
+            sink.get_static_pad("sink").add_data_probe(self._src_pad_probe)
 
 
     ### our methods
@@ -645,7 +645,7 @@ class Disker(feedcomponent.ParseLaunchComponent, log.Loggable):
                 # Very unlikely, but if we are not synced yet,
                 # add this entry to the index because it's going
                 # to be the sync point, and continue
-                if stats[6] == gst.CLOCK_TIME_NONE:
+                if stats[6] == Gst.CLOCK_TIME_NONE:
                     index.addEntry(offset, timestamp, isKeyframe, tdt, False)
                     continue
                 # if we know when the client was synced, trim the index.
@@ -774,8 +774,8 @@ class Disker(feedcomponent.ParseLaunchComponent, log.Loggable):
                           self.location, self.last_tstamp, True)
 
         sink = self.get_element('fdsink')
-        if sink.get_state() == gst.STATE_NULL:
-            sink.set_state(gst.STATE_READY)
+        if sink.get_state(0)[1] == Gst.State.NULL:
+            sink.set_state(Gst.State.READY)
 
         filename = ""
         if not filenameTemplate:
@@ -850,8 +850,8 @@ class Disker(feedcomponent.ParseLaunchComponent, log.Loggable):
 
     def _stopRecordingFull(self, handle, location, lastTstamp, delayedStop):
         sink = self.get_element('fdsink')
-        if sink.get_state() == gst.STATE_NULL:
-            sink.set_state(gst.STATE_READY)
+        if sink.get_state(0)[1] == Gst.State.NULL:
+            sink.set_state(Gst.State.READY)
 
         if handle:
             handle.flush()
@@ -890,7 +890,7 @@ class Disker(feedcomponent.ParseLaunchComponent, log.Loggable):
     # START OF THREAD AWARE METHODS
 
     def _notify_caps_cb(self, pad, param):
-        caps = pad.get_negotiated_caps()
+        caps = pad.get_current_caps()
         if caps == None:
             return
 
@@ -937,7 +937,8 @@ class Disker(feedcomponent.ParseLaunchComponent, log.Loggable):
             del self._clients[arg0]
 
     def _handle_event(self, event):
-        if event.type != gst.EVENT_CUSTOM_DOWNSTREAM:
+        import IPython; IPython.embed()
+        if event.type != Gst.EVENT_CUSTOM_DOWNSTREAM:
             return True
 
         struct = event.get_structure()
@@ -959,21 +960,21 @@ class Disker(feedcomponent.ParseLaunchComponent, log.Loggable):
 
     def _handle_buffer(self, buf):
         # IN_CAPS Buffers
-        if buf.flag_is_set(gst.BUFFER_FLAG_IN_CAPS):
+        if buf.flag_is_set(Gst.BUFFER_FLAG_IN_CAPS):
             self._headers_size += buf.size
             reactor.callFromThread(self._updateHeadersSize)
             return True
 
         # re-timestamp buffers without timestamp, so that we can get from
         # multifdsink's client stats the first and last buffer received
-        if buf.timestamp == gst.CLOCK_TIME_NONE:
+        if buf.timestamp == Gst.CLOCK_TIME_NONE:
             buf.timestamp = self._clock.get_time()
 
         if self.syncOnTdt:
             if self._nextIsKF:
                 # That's the first buffer after a 'tdt'. we mark it as a
                 # keyframe and the sink will start streaming from it.
-                buf.flag_unset(gst.BUFFER_FLAG_DELTA_UNIT)
+                buf.flag_unset(Gst.BUFFER_FLAG_DELTA_UNIT)
                 self._nextIsKF = False
                 reactor.callFromThread(self._updateIndex, self._offset,
                     buf.timestamp, False, int(self._lastTdt))
@@ -982,9 +983,9 @@ class Disker(feedcomponent.ParseLaunchComponent, log.Loggable):
                         self._startFilenameTemplate, self._startTime)
                     self._firstTdt = False
             else:
-                buf.flag_set(gst.BUFFER_FLAG_DELTA_UNIT)
+                buf.flag_set(Gst.BUFFER_FLAG_DELTA_UNIT)
         # if we don't sync on TDT and this is a keyframe, add it to the index
-        elif not buf.flag_is_set(gst.BUFFER_FLAG_DELTA_UNIT):
+        elif not buf.flag_is_set(Gst.BUFFER_FLAG_DELTA_UNIT):
             reactor.callFromThread(self._updateIndex,
                 self._offset, buf.timestamp, True, time.time())
         self._offset += buf.size
@@ -992,7 +993,7 @@ class Disker(feedcomponent.ParseLaunchComponent, log.Loggable):
 
     def _src_pad_probe(self, pad, data):
         # Events
-        if type(data) is gst.Event:
+        if type(data) is Gst.Event:
             if self.reactToMarks or self.syncOnTdt:
                 return self._handle_event(data)
         # Buffers
