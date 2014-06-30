@@ -143,12 +143,12 @@ class FeederClient:
 
     def setStats(self, stats):
         """
-        @type stats: list
+        @type stats: GstStructure
         """
         bytesSent = stats["bytes-sent"]
-        #timeAdded = stats[1]
-        #timeRemoved = stats[2]
-        #timeActive = stats[3]
+        #timeAdded = stats["connect-time"]
+        #timeRemoved = stats["disconnect-time"]
+        #timeActive = stats["connect-duration"]
         timeLastActivity = float(stats["last-activitity-time"]) / Gst.SECOND
         if stats.n_fields() > 5:
             # added in gst-plugins-base 0.10.11

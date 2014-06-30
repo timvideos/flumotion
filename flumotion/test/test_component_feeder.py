@@ -16,7 +16,7 @@
 # Headers in this file shall remain intact.
 
 import time
-
+from gi.repository import Gst
 from flumotion.common import testsuite
 
 from twisted.internet import defer, reactor
@@ -51,7 +51,10 @@ class TestFeeder(testsuite.TestCase):
             self.clientAssertStats(c, 0, 0, 10, 1, 2)
 
             # read 20 bytes, drop 2 buffers
-            c.setStats((20, None, None, None, time.time(), 2))
+            stats = Gst.Structure.from_string('multihandlesink-stats, bytes-sent=20, \
+                            connect-time=None, disconnect-time=None, connect-duration=None, \
+                            last-activitity-time=' + str(time.time()) + ', buffers-dropped=2')[0]
+            c.setStats(stats)
             self.clientAssertStats(c, 20, 2, 30, 3, 2)
 
             d.callback(None)
@@ -63,7 +66,11 @@ class TestFeeder(testsuite.TestCase):
         self.clientAssertStats(c, 0, None, 0, None, 1)
 
         # read 10 bytes, drop 1 buffer
-        c.setStats((10, None, None, None, time.time(), 1))
+        stats = Gst.Structure.from_string('multihandlesink-stats, bytes-sent=10, \
+                            connect-time=None, disconnect-time=None, connect-duration=None,\
+                            last-activitity-time=' + str(time.time()) + ', buffers-dropped=1')[0]
+
+        c.setStats(stats)
         self.clientAssertStats(c, 10, 1, 10, 1, 1)
 
         # remove client
