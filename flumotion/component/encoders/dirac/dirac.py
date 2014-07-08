@@ -47,7 +47,7 @@ class Dirac(feedcomponent.EncoderComponent):
         return d.addCallback(check_schroenc_bug, self)
 
     def get_pipeline_string(self, properties):
-        return "ffmpegcolorspace ! schroenc name=encoder"
+        return "videoconvert ! schroenc name=encoder"
 
     def configure_pipeline(self, pipeline, properties):
         element = pipeline.get_by_name('encoder')
