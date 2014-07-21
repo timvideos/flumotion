@@ -46,24 +46,9 @@ def checkTicket347():
     processing (mostly affects soundcard, firewire)
     """
     result = messages.Result()
-    import pygtk
-    pygtk.require('2.0')
-    import gobject
-    # Really, we want to check for pygobject_version, but that doesn't exist in
-    # all versions of pygtk, and this check is sufficient.
-    (major, minor, nano) = gobject.pygtk_version
-    if (major, minor, nano) < (2, 8, 6):
-        m = messages.Warning(T_(
-            N_("Version %d.%d.%d of the PyGTK library contains "
-                "a memory leak.\n"),
-            major, minor, nano),
-            mid='ticket-347')
-        m.add(T_(N_("The Soundcard and Firewire sources may leak a lot of "
-                    "memory as a result, and would need to be restarted "
-                    "frequently.\n")))
-        m.add(T_(N_("Please upgrade '%s' to version %s or later."),
-            'pygtk', '2.8.6'))
-        result.add(m)
+    import gi
+    gi.require_version('Gtk', '3.0')
+    from gi.repository import GObject
 
     result.succeed(None)
     return defer.succeed(result)
@@ -71,21 +56,7 @@ def checkTicket347():
 
 def checkTicket348():
     result = messages.Result()
-    import pygst
-    pygst.require('0.10')
-    import gst
-    (major, minor, nano) = gst.pygst_version
-    if (major, minor, nano) < (0, 10, 3):
-        m = messages.Warning(T_(
-            N_("Version %d.%d.%d of the gst-python library contains "
-                "a large memory leak.\n"),
-            major, minor, nano),
-            mid='ticket-348')
-        m.add(T_(N_("The Soundcard and Firewire sources may leak a lot of "
-            "memory as a result, and need to be restarted frequently.\n")))
-        m.add(T_(N_("Please upgrade '%s' to version %s or later."),
-            'gst-python', '0.10.3'))
-        result.add(m)
+    from gi.repository import Gst
 
     result.succeed(None)
     return defer.succeed(result)
