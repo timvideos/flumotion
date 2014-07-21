@@ -15,8 +15,8 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
-import gobject
+from gi.repository import Gst
+from gi.repository import GObject
 from twisted.internet import reactor
 
 from flumotion.component import feedcomponent
@@ -49,7 +49,7 @@ DEINTERLACE_METHOD = {
     "ffmpeg": FF_DEINTERLACER}
 
 
-class DeinterlaceBin(gst.Bin):
+class DeinterlaceBin(Gst.Bin):
     """
     I am a GStreamer bin that can deinterlace a video stream from its
     source pad using different methods.
@@ -59,31 +59,31 @@ class DeinterlaceBin(gst.Bin):
     DEFAULT_METHOD = 'ffmpeg'
 
     __gproperties__ = {
-        'keep-framerate': (gobject.TYPE_BOOLEAN, 'keeps the input framerate',
+        'keep-framerate': (GObject.TYPE_BOOLEAN, 'keeps the input framerate',
             'keeps in the output the same framerate as in the output '
             'even if the deinterlacer changes it',
-            True, gobject.PARAM_READWRITE),
-        'mode': (gobject.TYPE_STRING, 'deinterlace mode',
+            True, GObject.PARAM_READWRITE),
+        'mode': (GObject.TYPE_STRING, 'deinterlace mode',
             'mode used to deinterlace incoming frames',
-            'auto', gobject.PARAM_READWRITE),
-        'method': (gobject.TYPE_STRING, 'deinterlace method',
+            'auto', GObject.PARAM_READWRITE),
+        'method': (GObject.TYPE_STRING, 'deinterlace method',
             'method/algorithm used to deinterlace incoming frames',
-            'ffmpeg', gobject.PARAM_READWRITE)}
+            'ffmpeg', GObject.PARAM_READWRITE)}
 
     def __init__(self, mode, method):
-        gst.Bin.__init__(self)
+        Gst.Bin.__init__(self)
 
         self.keepFR = True
         self.deinterlacerName = PASSTHROUGH_DEINTERLACER
         self._interlaced = False
 
         # Create elements
-        self._colorspace = gst.element_factory_make("ffmpegcolorspace")
-        self._colorfilter = gst.element_factory_make("capsfilter")
-        self._deinterlacer = gst.element_factory_make(PASSTHROUGH_DEINTERLACER)
+        self._colorspace = Gst.ElementFactory.make("ffmpegcolorspace")
+        self._colorfilter = Gst.ElementFactory.make("capsfilter")
+        self._deinterlacer = Gst.ElementFactory.make(PASSTHROUGH_DEINTERLACER)
         self._deinterlacer.set_property('silent', True)
-        self._videorate = gst.element_factory_make("videorate")
-        self._ratefilter = gst.element_factory_make("capsfilter")
+        self._videorate = Gst.ElementFactory.make("videorate")
+        self._ratefilter = Gst.ElementFactory.make("capsfilter")
 
         # Add elements to the bin
         self.add(self._colorspace, self._colorfilter, self._deinterlacer,
@@ -94,8 +94,8 @@ class DeinterlaceBin(gst.Bin):
         # is different and the ffmpeg deinterlacer is added after the
         # negotiation happened in a different colorspace. This makes this
         # element not-passthrough.
-        self._colorfilter.set_property('caps', gst.Caps(
-            'video/x-raw-yuv, format=(fourcc)I420'))
+        self._colorfilter.set_property('caps', Gst.Caps(
+            'video/x-raw, format=(string)I420'))
 
         if gstreamer.element_has_property(self._videorate, 'skip-to-first'):
             self._videorate.set_property('skip-to-first', True)
@@ -107,8 +107,8 @@ class DeinterlaceBin(gst.Bin):
         self._videorate.link(self._ratefilter)
 
         # Create source and sink pads
-        self._sinkPad = gst.GhostPad('sink', self._colorspace.get_pad('sink'))
-        self._srcPad = gst.GhostPad('src', self._ratefilter.get_pad('src'))
+        self._sinkPad = Gst.GhostPad.new('sink', self._colorspace.get_pad('sink'))
+        self._srcPad = Gst.GhostPad.new('src', self._ratefilter.get_pad('src'))
         self.add_pad(self._sinkPad)
         self.add_pad(self._srcPad)
 
@@ -134,11 +134,11 @@ class DeinterlaceBin(gst.Bin):
             try:
                 framerate = struct['framerate']
             except KeyError:
-                framerate = gst.Fraction(25, 1)
+                framerate = Gst.Fraction(25, 1)
             fr = '%s/%s' % (framerate.num, framerate.denom)
-            self._ratefilter.set_property('caps', gst.Caps(
-                'video/x-raw-yuv, framerate=%s;'
-                'video/x-raw-rgb, framerate=%s' % (fr, fr)))
+            self._ratefilter.set_property('caps', Gst.Caps(
+                'video/x-raw, framerate=%s;'
+                'video/x-raw, framerate=%s' % (fr, fr)))
         # Detect if it's an interlaced stream using the 'interlaced' field
         try:
             interlaced = struct['interlaced']
@@ -165,18 +165,18 @@ class DeinterlaceBin(gst.Bin):
 
         def unlinkAndReplace(Pad, blocked, deinterlacerName):
             oldDeinterlacer = self._deinterlacer
-            self._deinterlacer = gst.element_factory_make(deinterlacerName)
+            self._deinterlacer = Gst.ElementFactory.make(deinterlacerName)
             if deinterlacerName == GST_DEINTERLACER:
                 self._deinterlacer.set_property("method", self.method)
             elif deinterlacerName == PASSTHROUGH_DEINTERLACER:
                 self._deinterlacer.set_property("silent", True)
-            self._deinterlacer.set_state(gst.STATE_PLAYING)
+            self._deinterlacer.set_state(Gst.State.PLAYING)
             self.add(self._deinterlacer)
             # unlink the sink and source pad of the old deinterlacer
             self._colorfilter.unlink(oldDeinterlacer)
             oldDeinterlacer.unlink(self._videorate)
             # remove the old deinterlacer from the bin
-            oldDeinterlacer.set_state(gst.STATE_NULL)
+            oldDeinterlacer.set_state(Gst.State.NULL)
             self.remove(oldDeinterlacer)
             self._colorfilter.link(self._deinterlacer)
             self._deinterlacer.link(self._videorate)
@@ -194,8 +194,8 @@ class DeinterlaceBin(gst.Bin):
     def eventfunc(self, pad, event):
         self.debug("Received event %r from %s" % (event, event.src))
         if gstreamer.event_is_flumotion_reset(event):
-            self._videorate.set_state(gst.STATE_READY)
-            self._videorate.set_state(gst.STATE_PLAYING)
+            self._videorate.set_state(Gst.State.READY)
+            self._videorate.set_state(Gst.State.PLAYING)
         return self._srcPad.push_event(event)
 
     def _setMode(self, mode):

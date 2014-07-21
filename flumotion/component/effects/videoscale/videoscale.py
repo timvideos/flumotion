@@ -16,8 +16,8 @@
 # Headers in this file shall remain intact.
 
 from twisted.internet import reactor
-import gobject
-import gst
+from gi.repository import GObject
+from gi.repository import Gst
 
 from flumotion.common import errors, messages, gstreamer
 from flumotion.common.i18n import N_, gettexter
@@ -28,35 +28,35 @@ __version__ = "$Rev$"
 T_ = gettexter()
 
 
-class VideoscaleBin(gst.Bin):
+class VideoscaleBin(Gst.Bin):
     """
     I am a GStreamer bin that can scale a video stream from its source pad.
     """
     logCategory = "videoscale"
 
     __gproperties__ = {
-        'width': (gobject.TYPE_UINT, 'width',
+        'width': (GObject.TYPE_UINT, 'width',
             'Output width',
-            1, 10000, 100, gobject.PARAM_READWRITE),
-        'height': (gobject.TYPE_UINT, 'height',
+            1, 10000, 100, GObject.PARAM_READWRITE),
+        'height': (GObject.TYPE_UINT, 'height',
             'Output height',
-            1, 10000, 100, gobject.PARAM_READWRITE),
-        'width-correction': (gobject.TYPE_UINT, 'width correction',
+            1, 10000, 100, GObject.PARAM_READWRITE),
+        'width-correction': (GObject.TYPE_UINT, 'width correction',
             'Corrects with to be a multiple of this value',
-            0, 64, 8, gobject.PARAM_READWRITE),
-        'height-correction': (gobject.TYPE_UINT, 'height correction',
+            0, 64, 8, GObject.PARAM_READWRITE),
+        'height-correction': (GObject.TYPE_UINT, 'height correction',
             'Corrects height to be a multiple of this value',
-            0, 64, 0, gobject.PARAM_READWRITE),
-        'is-square': (gobject.TYPE_BOOLEAN, 'PAR 1/1',
+            0, 64, 0, GObject.PARAM_READWRITE),
+        'is-square': (GObject.TYPE_BOOLEAN, 'PAR 1/1',
             'Output with PAR 1/1',
-            False, gobject.PARAM_READWRITE),
-        'add-borders': (gobject.TYPE_BOOLEAN, 'Add borders',
+            False, GObject.PARAM_READWRITE),
+        'add-borders': (GObject.TYPE_BOOLEAN, 'Add borders',
             'Add black borders to keep DAR if needed',
-            False, gobject.PARAM_READWRITE)}
+            False, GObject.PARAM_READWRITE)}
 
     def __init__(self, width, height, is_square, add_borders,
                  width_correction=8, height_correction=0):
-        gst.Bin.__init__(self)
+        Gst.Bin.__init__(self)
         self._width = width
         self._height = height
         self._width_correction = width_correction
@@ -68,10 +68,10 @@ class VideoscaleBin(gst.Bin):
         self._inwidth = None
         self._inheight = None
 
-        self._identity = gst.element_factory_make("identity")
-        self._videoscaler = gst.element_factory_make("videoscale")
-        self._capsfilter = gst.element_factory_make("capsfilter")
-        self._videobox = gst.element_factory_make("videobox")
+        self._identity = Gst.ElementFactory.make("identity")
+        self._videoscaler = Gst.ElementFactory.make("videoscale")
+        self._capsfilter = Gst.ElementFactory.make("capsfilter")
+        self._videobox = Gst.ElementFactory.make("videobox")
         self.add(self._identity, self._videoscaler, self._capsfilter,
                  self._videobox)
 
@@ -80,8 +80,8 @@ class VideoscaleBin(gst.Bin):
         self._capsfilter.link(self._videobox)
 
         # Create source and sink pads
-        self._sinkPad = gst.GhostPad('sink', self._identity.get_pad('sink'))
-        self._srcPad = gst.GhostPad('src', self._videobox.get_pad('src'))
+        self._sinkPad = Gst.GhostPad.new('sink', self._identity.get_pad('sink'))
+        self._srcPad = Gst.GhostPad.new('src', self._videobox.get_pad('src'))
         self.add_pad(self._sinkPad)
         self.add_pad(self._srcPad)
 
@@ -98,15 +98,15 @@ class VideoscaleBin(gst.Bin):
     def _updateFilter(self, blockPad):
 
         def unlinkAndReplace(pad, blocked):
-            self._videoscaler.set_state(gst.STATE_NULL)
-            self._capsfilter.set_state(gst.STATE_NULL)
-            self._videobox.set_state(gst.STATE_NULL)
+            self._videoscaler.set_state(Gst.State.NULL)
+            self._capsfilter.set_state(Gst.State.NULL)
+            self._videobox.set_state(Gst.State.NULL)
 
             self._configureOutput()
 
-            self._videobox.set_state(gst.STATE_PLAYING)
-            self._videoscaler.set_state(gst.STATE_PLAYING)
-            self._capsfilter.set_state(gst.STATE_PLAYING)
+            self._videobox.set_state(Gst.State.PLAYING)
+            self._videoscaler.set_state(Gst.State.PLAYING)
+            self._capsfilter.set_state(Gst.State.PLAYING)
 
             # unlink the sink and source pad of the old deinterlacer
             reactor.callFromThread(blockPad.set_blocked, False)
@@ -126,9 +126,9 @@ class VideoscaleBin(gst.Bin):
             p = "%s,width=(int)%d" % (p, self._width)
         if self._height:
             p = "%s,height=(int)%d" % (p, self._height)
-        p = "video/x-raw-yuv%s;video/x-raw-rgb%s" % (p, p)
+        p = "video/x-raw%s;video/x-raw%s" % (p, p)
         self.info("out:%s" % p)
-        caps = gst.Caps(p)
+        caps = Gst.Caps(p)
 
         self._capsfilter.set_property("caps", caps)
         if gstreamer.element_has_property(self._videoscaler, 'add-borders'):
