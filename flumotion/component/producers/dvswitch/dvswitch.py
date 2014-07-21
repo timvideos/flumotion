@@ -19,7 +19,7 @@
 
 # Headers in this file shall remain intact.
 
-import gst
+from gi.repository import Gst
 from twisted.internet import defer
 
 from flumotion.common import errors, messages, gstreamer
@@ -89,7 +89,7 @@ class DVSwitch(feedcomponent.ParseLaunchComponent):
 
         fr = props.get('framerate', None)
         if fr is not None:
-            self.framerate = gst.Fraction(fr[0], fr[1])
+            self.framerate = Gst.Fraction(fr[0], fr[1])
         else:
             self.framerate = None
 
@@ -102,7 +102,7 @@ class DVSwitch(feedcomponent.ParseLaunchComponent):
                     '    ! dvdemux name=demux'
                     '  demux. ! queue ! %s name=decoder'
                     '    ! @feeder:video@'
-                    '  demux. ! queue ! audio/x-raw-int '
+                    '  demux. ! queue ! audio/x-raw '
                     '    ! volume name=setvolume'
                     '    ! level name=volumelevel message=true '
                     '    ! @feeder:audio@' % (uri, decoder))
@@ -132,18 +132,18 @@ class DVSwitch(feedcomponent.ParseLaunchComponent):
             decoder.set_property('drop-factor', drop_factor)
 
         vr = videorate.Videorate('videorate',
-            decoder.get_pad("src"), pipeline, self.framerate)
+            decoder.get_static_pad("src"), pipeline, self.framerate)
         self.addEffect(vr)
         vr.plug()
 
         deinterlacer = deinterlace.Deinterlace('deinterlace',
-            vr.effectBin.get_pad("src"), pipeline,
+            vr.effectBin.get_static_pad("src"), pipeline,
             self.deintMode, self.deintMethod)
         self.addEffect(deinterlacer)
         deinterlacer.plug()
 
         videoscaler = videoscale.Videoscale('videoscale', self,
-            deinterlacer.effectBin.get_pad("src"), pipeline,
+            deinterlacer.effectBin.get_static_pad("src"), pipeline,
             self.width, self.height, self.is_square, self.add_borders)
         self.addEffect(videoscaler)
         videoscaler.plug()
@@ -151,8 +151,8 @@ class DVSwitch(feedcomponent.ParseLaunchComponent):
         # Setting a tolerance of 20ms should be enough (1/2 frame), but
         # we set it to 40ms to be more conservatives
         ar = audioconvert.Audioconvert('audioconvert',
-                                       comp_level.get_pad("src"),
-                                       pipeline, tolerance=40 * gst.MSECOND)
+                                       comp_level.get_static_pad("src"),
+                                       pipeline, tolerance=40 * Gst.MSECOND)
         self.addEffect(ar)
         ar.plug()
 

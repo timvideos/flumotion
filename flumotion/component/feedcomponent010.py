@@ -554,7 +554,7 @@ class FeedComponent(basecomponent.BaseComponent):
         (ret, state, pending) = self.pipeline.get_state(0)
         if state != Gst.State.PAUSED and state != Gst.State.PLAYING:
             self.debug("pipeline still spinning up: %r", state)
-            d = self._change_monitor.add(Gst.StateChangeReturn.READY_TO_PAUSED)
+            d = self._change_monitor.add(Gst.StateChange.READY_TO_PAUSED)
             d.addCallback(pipelinePaused)
             return d
         elif self.clock_provider:
