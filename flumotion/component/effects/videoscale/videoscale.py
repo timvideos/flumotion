@@ -80,8 +80,8 @@ class VideoscaleBin(Gst.Bin):
         self._capsfilter.link(self._videobox)
 
         # Create source and sink pads
-        self._sinkPad = Gst.GhostPad.new('sink', self._identity.get_pad('sink'))
-        self._srcPad = Gst.GhostPad.new('src', self._videobox.get_pad('src'))
+        self._sinkPad = Gst.GhostPad.new('sink', self._identity.get_static_pad('sink'))
+        self._srcPad = Gst.GhostPad.new('src', self._videobox.get_static_pad('src'))
         self.add_pad(self._sinkPad)
         self.add_pad(self._srcPad)
 
@@ -89,10 +89,10 @@ class VideoscaleBin(Gst.Bin):
 
         self._identity.set_property('silent', True)
         # Add the setcaps function in the sink pad
-        self._sinkPad.set_setcaps_function(self._sinkSetCaps)
+        # FIXME(aps-sids) #self._sinkPad.set_setcaps_function(self._sinkSetCaps)
         # Add a callback for caps changes in the videoscaler source pad
         # to recalculate the scale correction
-        self._videoscaler.get_pad('src').connect(
+        self._videoscaler.get_static_pad('src').connect(
             'notify::caps', self._applyScaleCorrection)
 
     def _updateFilter(self, blockPad):
@@ -127,7 +127,7 @@ class VideoscaleBin(Gst.Bin):
         if self._height:
             p = "%s,height=(int)%d" % (p, self._height)
         p = "video/x-raw%s;video/x-raw%s" % (p, p)
-        self.info("out:%s" % p)
+        # FIXME(aps-sids) #self.info("out:%s" % p)
         caps = Gst.Caps(p)
 
         self._capsfilter.set_property("caps", caps)

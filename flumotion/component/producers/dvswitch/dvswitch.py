@@ -97,7 +97,8 @@ class DVSwitch(feedcomponent.ParseLaunchComponent):
         # replace it with videotestsrc of the same size and PAR, so we can
         # unittest the pipeline
         # need a queue in case tcpserversink blocks somehow
-        template = ('dvswitchsrc %s'
+        template = ('dvswitchsrc name=src %s'
+                    '    ! tee name=t'
                     '    ! queue leaky=2 max-size-time=1000000000'
                     '    ! dvdemux name=demux'
                     '  demux. ! queue ! %s name=decoder'
@@ -105,7 +106,8 @@ class DVSwitch(feedcomponent.ParseLaunchComponent):
                     '  demux. ! queue ! audio/x-raw '
                     '    ! volume name=setvolume'
                     '    ! level name=volumelevel message=true '
-                    '    ! @feeder:audio@' % (uri, decoder))
+                    '    ! @feeder:audio@'
+                    '    t. ! queue ! @feeder:dv@' % (uri, decoder))
 
         return template
 

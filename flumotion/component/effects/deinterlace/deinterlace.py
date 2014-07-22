@@ -78,7 +78,7 @@ class DeinterlaceBin(Gst.Bin):
         self._interlaced = False
 
         # Create elements
-        self._colorspace = Gst.ElementFactory.make("ffmpegcolorspace")
+        self._colorspace = Gst.ElementFactory.make("videoconvert")
         self._colorfilter = Gst.ElementFactory.make("capsfilter")
         self._deinterlacer = Gst.ElementFactory.make(PASSTHROUGH_DEINTERLACER)
         self._deinterlacer.set_property('silent', True)
@@ -107,17 +107,15 @@ class DeinterlaceBin(Gst.Bin):
         self._videorate.link(self._ratefilter)
 
         # Create source and sink pads
-        self._sinkPad = Gst.GhostPad.new('sink', self._colorspace.get_pad('sink'))
-        self._srcPad = Gst.GhostPad.new('src', self._ratefilter.get_pad('src'))
+        self._sinkPad = Gst.GhostPad.new('sink', self._colorspace.get_static_pad('sink'))
+        self._srcPad = Gst.GhostPad.new('src', self._ratefilter.get_static_pad('src'))
         self.add_pad(self._sinkPad)
         self.add_pad(self._srcPad)
 
         # Store deinterlacer's sink and source peer pads
-        self._sinkPeerPad = self._colorspace.get_pad('src')
-        self._srcPeerPad = self._videorate.get_pad('sink')
+        self._sinkPeerPad = self._colorspace.get_static_pad('src')
+        self._srcPeerPad = self._videorate.get_static_pad('sink')
 
-        # Add setcaps callback in the sink pad
-        self._sinkPad.set_setcaps_function(self._sinkSetCaps)
         self._sinkPad.set_event_function(self.eventfunc)
 
         # Set the mode and method in the deinterlacer
@@ -192,6 +190,9 @@ class DeinterlaceBin(Gst.Bin):
             True, unlinkAndReplace, deinterlacerName)
 
     def eventfunc(self, pad, event):
+        if event.type == Gst.EventType.CAPS:
+            caps = event.parse_caps()
+            self._sinkSetCaps(pad, caps)
         self.debug("Received event %r from %s" % (event, event.src))
         if gstreamer.event_is_flumotion_reset(event):
             self._videorate.set_state(Gst.State.READY)
