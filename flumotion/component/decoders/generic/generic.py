@@ -15,8 +15,8 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
-import gobject
+from gi.repository import Gst
+from gi.repository import GObject
 import threading
 
 from flumotion.component import decodercomponent as dc
@@ -27,8 +27,8 @@ T_ = gettexter()
 
 __version__ = "$Rev: 7162 $"
 
-BASIC_AUDIO_CAPS = "audio/x-raw-int;audio/x-raw-float"
-BASIC_VIDEO_CAPS = "video/x-raw-yuv;video/x-raw-rgb"
+BASIC_AUDIO_CAPS = "audio/x-raw;audio/x-raw"
+BASIC_VIDEO_CAPS = "video/x-raw;video/x-raw"
 
 # FIXME: The GstAutoplugSelectResult enum has no bindings in gst-python.
 # Replace this when the enum is exposed in the bindings.
@@ -44,44 +44,44 @@ class FeederInfo(object):
         self.caps = caps
 
 
-class SyncKeeper(gst.Element):
-    __gstdetails__ = ('SyncKeeper', 'Generic',
+class SyncKeeper(Gst.Element):
+    __gstmetadata__ = ('SyncKeeper', 'Generic',
                       'Retimestamp the output to be contiguous and maintain '
                       'the sync', 'Xavier Queralt')
-    _audiosink = gst.PadTemplate("audio-in",
-                                 gst.PAD_SINK,
-                                 gst.PAD_ALWAYS,
-                                 gst.caps_from_string(BASIC_AUDIO_CAPS))
-    _videosink = gst.PadTemplate("video-in",
-                                 gst.PAD_SINK,
-                                 gst.PAD_ALWAYS,
-                                 gst.caps_from_string(BASIC_VIDEO_CAPS))
-    _audiosrc = gst.PadTemplate("audio-out",
-                                gst.PAD_SRC,
-                                gst.PAD_ALWAYS,
-                                gst.caps_from_string(BASIC_AUDIO_CAPS))
-    _videosrc = gst.PadTemplate("video-out",
-                                gst.PAD_SRC,
-                                gst.PAD_ALWAYS,
-                                gst.caps_from_string(BASIC_VIDEO_CAPS))
+    _audiosink = Gst.PadTemplate.new("audio-in",
+                                 Gst.PadDirection.SINK,
+                                 Gst.PadPresence.ALWAYS,
+                                 Gst.Caps.from_string(BASIC_AUDIO_CAPS))
+    _videosink = Gst.PadTemplate.new("video-in",
+                                 Gst.PadDirection.SINK,
+                                 Gst.PadPresence.ALWAYS,
+                                 Gst.Caps.from_string(BASIC_VIDEO_CAPS))
+    _audiosrc = Gst.PadTemplate.new("audio-out",
+                                Gst.PadDirection.SRC,
+                                Gst.PadPresence.ALWAYS,
+                                Gst.Caps.from_string(BASIC_AUDIO_CAPS))
+    _videosrc = Gst.PadTemplate.new("video-out",
+                                Gst.PadDirection.SRC,
+                                Gst.PadPresence.ALWAYS,
+                                Gst.Caps.from_string(BASIC_VIDEO_CAPS))
 
     def __init__(self):
-        gst.Element.__init__(self)
+        Gst.Element.__init__(self)
 
         # create source pads
-        self.audiosrc = gst.Pad(self._audiosrc, "audio-out")
+        self.audiosrc = Gst.Pad.new_from_template(self._audiosrc, "audio-out")
         self.add_pad(self.audiosrc)
-        self.videosrc = gst.Pad(self._videosrc, "video-out")
+        self.videosrc = Gst.Pad.new_from_template(self._videosrc, "video-out")
         self.add_pad(self.videosrc)
 
         # create the sink pads and set the chain and event function
-        self.audiosink = gst.Pad(self._audiosink, "audio-in")
+        self.audiosink = Gst.Pad.new_from_template(self._audiosink, "audio-in")
         self.audiosink.set_chain_function(lambda pad, buffer:
             self.chainfunc(pad, buffer, self.audiosrc))
         self.audiosink.set_event_function(lambda pad, buffer:
             self.eventfunc(pad, buffer, self.audiosrc))
         self.add_pad(self.audiosink)
-        self.videosink = gst.Pad(self._videosink, "video-in")
+        self.videosink = Gst.Pad.new_from_template(self._videosink, "video-in")
         self.videosink.set_chain_function(lambda pad, buffer:
             self.chainfunc(pad, buffer, self.videosrc))
         self.videosink.set_event_function(lambda pad, buffer:
@@ -99,7 +99,7 @@ class SyncKeeper(gst.Element):
     def _send_new_segment(self):
         for pad in [self.videosrc, self.audiosrc]:
             pad.push_event(
-                gst.event_new_new_segment(True, 1.0, gst.FORMAT_TIME,
+                Gst.Event.new_segment(True, 1.0, Gst.Format.TIME,
                                           self._syncTimestamp, -1, 0))
         self._sendNewSegment = False
 
@@ -115,14 +115,14 @@ class SyncKeeper(gst.Element):
             self._syncOffset = start
         self._resetReceived = False
         self.info("Update sync point to % r, offset to %r" %
-            (gst.TIME_ARGS(self._syncTimestamp),
-            (gst.TIME_ARGS(self._syncOffset))))
+            (Gst.TIME_ARGS(self._syncTimestamp),
+            (Gst.TIME_ARGS(self._syncOffset))))
 
     def chainfunc(self, pad, buf, srcpad):
         self.log("Input %s timestamp: %s, %s" %
             (srcpad is self.audiosrc and 'audio' or 'video',
-            gst.TIME_ARGS(buf.timestamp),
-            gst.TIME_ARGS(buf.duration)))
+            Gst.TIME_ARGS(buf.pts),
+            Gst.TIME_ARGS(buf.duration)))
 
         if not self._sendNewSegment:
             self._send_new_segment()
@@ -130,35 +130,35 @@ class SyncKeeper(gst.Element):
         try:
             self._lock.acquire()
             # Discard buffers outside the configured segment
-            if buf.timestamp < self._syncOffset:
+            if buf.pts < self._syncOffset:
                 self.warning("Could not clip buffer to segment")
-                return gst.FLOW_OK
-            if buf.timestamp == gst.CLOCK_TIME_NONE:
-                return gst.FLOW_OK
+                return Gst.FlowReturn.OK
+            if buf.pts == Gst.CLOCK_TIME_NONE:
+                return Gst.FlowReturn.OK
             # Get the input stream time of the buffer
-            buf.timestamp -= self._syncOffset
+            buf.pts -= self._syncOffset
             # Set the accumulated stream time
-            buf.timestamp += self._syncTimestamp
+            buf.pts += self._syncTimestamp
             duration = 0
-            if buf.duration != gst.CLOCK_TIME_NONE:
+            if buf.duration != Gst.CLOCK_TIME_NONE:
                 duration = buf.duration
-            self._totalTime = max(buf.timestamp + duration, self._totalTime)
+            self._totalTime = max(buf.pts + duration, self._totalTime)
 
             self.log("Output %s timestamp: %s, %s" %
                 (srcpad is self.audiosrc and 'audio' or 'video',
-                gst.TIME_ARGS(buf.timestamp),
-                gst.TIME_ARGS(buf.duration)))
+                Gst.TIME_ARGS(buf.pts),
+                Gst.TIME_ARGS(buf.duration)))
         finally:
             self._lock.release()
 
         srcpad.push(buf)
-        return gst.FLOW_OK
+        return Gst.FlowReturn.OK
 
     def eventfunc(self, pad, event, srcpad):
         self.debug("Received event %r from %s" % (event, event.src))
         try:
             self._lock.acquire()
-            if event.type == gst.EVENT_NEWSEGMENT:
+            if event.type == Gst.EventType.SEGMENT:
                 u, r, f, start, s, position = event.parse_new_segment()
                 self._update_sync_point(start, position)
             if gstreamer.event_is_flumotion_reset(event):
@@ -168,17 +168,36 @@ class SyncKeeper(gst.Element):
             self._lock.release()
 
         # forward all the events except the new segment events
-        if event.type != gst.EVENT_NEWSEGMENT:
+        if event.type != Gst.EventType.SEGMENT:
             return srcpad.push_event(event)
         return True
 
-gobject.type_register(SyncKeeper)
-gst.element_register(SyncKeeper, "synckeeper", gst.RANK_MARGINAL)
+def plugin_init(plugin, userarg):
+    name = plugin.get_name()
+    pluginType = GObject.type_register(userarg)
+    Gst.Element.register(plugin, name, Gst.Rank.MARGINAL, pluginType)
+    return True
+
+version = Gst.version()
+
+Gst.Plugin.register_static_full(
+    version[0],  # GST_VERSION_MAJOR
+    version[1],  # GST_VERSION_MINOR
+    'synckeeper',
+    'sync keeper plugin',
+    plugin_init,
+    '12.06',
+    'LGPL',
+    'synckeeper',
+    'synckeeper',
+    '',
+    SyncKeeper,
+)
 
 
 class GenericDecoder(dc.DecoderComponent):
     """
-    Generic decoder component using decodebin2.
+    Generic decoder component using decodebin.
 
     It listen to the custom gstreamer event flumotion-reset,
     and reset the decoding pipeline by removing the old one
@@ -232,7 +251,7 @@ class GenericDecoder(dc.DecoderComponent):
     ### Protected Methods ##
 
     def _get_base_pipeline_string(self):
-        return 'decodebin2 name=decoder'
+        return 'decodebin name=decoder'
 
     def _get_feeders_info(self):
         """
@@ -290,4 +309,4 @@ class AVGenericDecoder(GenericDecoder):
                 FeederInfo('video', BASIC_VIDEO_CAPS))
 
     def _get_base_pipeline_string(self):
-        return 'decodebin2 name=decoder synckeeper name=sync'
+        return 'decodebin name=decoder synckeeper name=sync'

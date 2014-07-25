@@ -19,8 +19,7 @@
 Decoder component, participating in the stream
 """
 
-import gst
-import gst.interfaces
+from gi.repository import Gst
 
 from flumotion.common.i18n import N_, gettexter
 from flumotion.common import errors, messages, gstreamer
@@ -62,21 +61,21 @@ class DecoderComponent(fc.ReconfigurableComponent):
         width = props.get('width', None)
         height = props.get('height', None)
         # Expressed in ms
-        interval = props.get('keyunits-interval', 10000) * gst.MSECOND
+        interval = props.get('keyunits-interval', 10000) * Gst.MSECOND
         fr = props.get('framerate', (25, 2))
-        framerate = gst.Fraction(fr[0], fr[1])
+        framerate = Gst.Fraction(fr[0], fr[1])
 
         self.vr = videorate.Videorate('videorate', None,
                                       self.pipeline, framerate)
         self.addEffect(self.vr)
-        #self.vr.effectBin.set_state(gst.STATE_PLAYING)
+        #self.vr.effectBin.set_state(Gst.State.PLAYING)
         self.debug("Videorate added")
 
         self.videoscaler = videoscale.Videoscale('videoscale', self,
             None, self.pipeline,
             width, height, is_square, add_borders)
         self.addEffect(self.videoscaler)
-        #self.videoscaler.effectBin.set_state(gst.STATE_PLAYING)
+        #self.videoscaler.effectBin.set_state(Gst.State.PLAYING)
         self.debug("Videoscaler  added")
 
         self.vkuscheduler = kuscheduler.KeyUnitsScheduler('keyunits-scheduler',
@@ -90,7 +89,7 @@ class DecoderComponent(fc.ReconfigurableComponent):
         props = self.config['properties']
         samplerate = props.get('samplerate', 44100)
         channels = props.get('channels', 2)
-        interval = props.get('keyunits-interval', 10000) * gst.MSECOND
+        interval = props.get('keyunits-interval', 10000) * Gst.MSECOND
 
         self.ar = audioconvert.Audioconvert('audioconvert', None,
                                             self.pipeline, channels=channels,
