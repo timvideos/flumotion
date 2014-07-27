@@ -16,8 +16,7 @@
 #
 # Headers in this file shall remain intact.
 
-
-import md5
+from haslib import md5
 import sys
 
 
