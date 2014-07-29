@@ -1,0 +1,55 @@
+<registry>
+
+  <components>
+    <component type="justintv-consumer"
+               base="flumotion/component/consumers/justintv"
+               _description="A GStreamer to Justin.TV exporter.">
+      <source location="flumotion.component.consumers.justintv.justintv" />
+      <eater name="default" multiple="yes" />
+      <entries>
+        <entry type="component" location="justintv.py"
+               function="JustinTV" />
+      </entries>
+
+      <synchronization required="yes" />
+
+      <properties>
+        <property name="justintv-user" type="string" required="yes"
+                  _description="The Justin.TV username." />
+        <property name="justintv-key" type="string" required="yes"
+                  _description="The Justin.TV live 'Stream Key'. Can be found at http://www.justin.tv/broadcast/adv_other" />
+      </properties>
+    </component>
+  </components>
+
+
+  <bundles>
+
+    <bundle name="justintv-consumer-base">
+        <dependencies>
+            <dependency name="component-base" />
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/consumers/justintv">
+                <filename location="__init__.py" />
+            </directory>
+        </directories>
+    </bundle>
+
+    <bundle name="justintv-consumer-component">
+        <dependencies>
+            <dependency name="component" />
+            <dependency name="justintv-consumer-base" />
+        </dependencies>
+
+        <directories>
+            <directory name="flumotion/component/consumers/justintv">
+                <filename location="justintv.py" />
+            </directory>
+        </directories>
+    </bundle>
+
+  </bundles>
+
+</registry>
