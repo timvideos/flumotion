@@ -15,8 +15,8 @@
 #
 # Headers in this file shall remain intact.
 
-import gobject
-import gst
+from gi.repository import GObject
+from gi.repository import Gst
 
 from flumotion.component import feedcomponent
 from flumotion.common import gstreamer
@@ -24,7 +24,7 @@ from flumotion.common import gstreamer
 __version__ = "$Rev$"
 
 
-class VideorateBin(gst.Bin):
+class VideorateBin(Gst.Bin):
     """
     I am a GStreamer bin that can change the framerate of a video stream.
     """
@@ -33,15 +33,15 @@ class VideorateBin(gst.Bin):
                     "video/x-raw-rgb%(fr)s"
 
     __gproperties__ = {
-        'framerate': (gobject.TYPE_OBJECT, 'framerate',
-                   'Video framerate', gobject.PARAM_READWRITE)}
+        'framerate': (GObject.TYPE_OBJECT, 'framerate',
+                   'Video framerate', GObject.PARAM_READWRITE)}
 
-    def __init__(self, framerate=gst.Fraction(25, 1)):
-        gst.Bin.__init__(self)
+    def __init__(self, framerate=Gst.Fraction(25, 1)):
+        Gst.Bin.__init__(self)
         self._framerate = framerate
 
-        self._videorate = gst.element_factory_make("videorate")
-        self._capsfilter = gst.element_factory_make("capsfilter")
+        self._videorate = Gst.ElementFactory.make("videorate")
+        self._capsfilter = Gst.ElementFactory.make("capsfilter")
         self.add(self._videorate, self._capsfilter)
 
         self._videorate.link(self._capsfilter)
@@ -51,8 +51,8 @@ class VideorateBin(gst.Bin):
             self._videorate.set_property('skip-to-first', True)
 
         # Create source and sink pads
-        self._sinkPad = gst.GhostPad('sink', self._videorate.get_pad('sink'))
-        self._srcPad = gst.GhostPad('src', self._capsfilter.get_pad('src'))
+        self._sinkPad = Gst.GhostPad.new('sink', self._videorate.get_pad('sink'))
+        self._srcPad = Gst.GhostPad.new('src', self._capsfilter.get_pad('src'))
         self.add_pad(self._sinkPad)
         self.add_pad(self._srcPad)
 
@@ -63,7 +63,7 @@ class VideorateBin(gst.Bin):
     def _setFramerate(self, framerate):
         self._framerate = framerate
         self._capsfilter.set_property('caps',
-            gst.Caps(self.CAPS_TEMPLATE % dict(fr=self.framerateToString())))
+            Gst.Caps(self.CAPS_TEMPLATE % dict(fr=self.framerateToString())))
 
     def do_set_property(self, property, value):
         if property.name == 'framerate':
@@ -80,8 +80,8 @@ class VideorateBin(gst.Bin):
     def eventfunc(self, pad, event):
         self.debug("Received event %r from %s" % (event, event.src))
         if gstreamer.event_is_flumotion_reset(event):
-            self._videorate.set_state(gst.STATE_READY)
-            self._videorate.set_state(gst.STATE_PLAYING)
+            self._videorate.set_state(Gst.State.READY)
+            self._videorate.set_state(Gst.State.PLAYING)
         return self._srcPad.push_event(event)
 
     def framerateToString(self):
