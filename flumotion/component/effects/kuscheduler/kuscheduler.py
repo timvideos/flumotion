@@ -39,7 +39,7 @@ class GstKeyUnitsScheduler(Gst.Element):
             0, Gst.CLOCK_TIME_NONE, DEFAULT_INTERVAL,
             GObject.PARAM_READWRITE)}
 
-    __gstdetails__ = ('FluKeyUnitsScheduler', 'Converter',
+    __gstmetadata__ = ('FluKeyUnitsScheduler', 'Converter',
                       'Key Units scheduler for flumotion',
                       'Flumotion Dev Team')
 
@@ -55,11 +55,11 @@ class GstKeyUnitsScheduler(Gst.Element):
 
     def __init__(self):
         Gst.Element.__init__(self)
-        self.sinkpad = Gst.Pad(self._sinkpadtemplate, "sink")
-        self.sinkpad.set_chain_function(self.chainfunc)
+        self.sinkpad = Gst.Pad.new_from_template(self._sinkpadtemplate, "sink")
+        self.sinkpad.set_chain_function_full(self.chainfunc)
         self.add_pad(self.sinkpad)
 
-        self.srcpad = Gst.Pad(self._srcpadtemplate, "src")
+        self.srcpad = Gst.Pad.new_from_template(self._srcpadtemplate, "src")
         self.add_pad(self.srcpad)
 
         self._last_ts = 0L
@@ -147,6 +147,25 @@ class KeyUnitsScheduler(feedcomponent.PostProcEffect):
 
 
 def register():
-    GObject.type_register(GstKeyUnitsScheduler)
-    Gst.element_register(GstKeyUnitsScheduler, 'keyunitsscheduler',
-        Gst.RANK_MARGINAL)
+
+    def plugin_init(plugin, userarg):
+        name = plugin.get_name()
+        pluginType = GObject.type_register(userarg)
+        Gst.Element.register(plugin, name, Gst.Rank.MARGINAL, pluginType)
+        return True
+
+    version = Gst.version()
+
+    Gst.Plugin.register_static_full(
+        version[0], # GST_VERSION_MAJOR
+        version[1], # GST_VERSION_MINOR
+        'keyunitsscheduler',
+        'key units scheduler plugin',
+        plugin_init,
+        '12.06',
+        'LGPL',
+        'keyunitsscheduler',
+        'keyunitsscheduler',
+        '',
+        GstKeyUnitsScheduler,
+    )

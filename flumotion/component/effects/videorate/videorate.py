@@ -29,8 +29,8 @@ class VideorateBin(Gst.Bin):
     I am a GStreamer bin that can change the framerate of a video stream.
     """
     logCategory = "videosrate"
-    CAPS_TEMPLATE = "video/x-raw-yuv%(fr)s;"\
-                    "video/x-raw-rgb%(fr)s"
+    CAPS_TEMPLATE = "video/x-raw%(fr)s;"\
+                    "video/x-raw%(fr)s"
 
     __gproperties__ = {
         'framerate': (GObject.TYPE_OBJECT, 'framerate',
@@ -51,12 +51,12 @@ class VideorateBin(Gst.Bin):
             self._videorate.set_property('skip-to-first', True)
 
         # Create source and sink pads
-        self._sinkPad = Gst.GhostPad.new('sink', self._videorate.get_pad('sink'))
-        self._srcPad = Gst.GhostPad.new('src', self._capsfilter.get_pad('src'))
+        self._sinkPad = Gst.GhostPad.new('sink', self._videorate.get_static_pad('sink'))
+        self._srcPad = Gst.GhostPad.new('src', self._capsfilter.get_static_pad('src'))
         self.add_pad(self._sinkPad)
         self.add_pad(self._srcPad)
 
-        self._sinkPad.set_event_function(self.eventfunc)
+        self._sinkPad.set_event_function_full(self.eventfunc)
 
         self._setFramerate(framerate)
 
@@ -77,8 +77,8 @@ class VideorateBin(Gst.Bin):
         else:
             raise AttributeError('unknown property %s' % property.name)
 
-    def eventfunc(self, pad, event):
-        self.debug("Received event %r from %s" % (event, event.src))
+    def eventfunc(self, pad, parent, event):
+        # FIXME(aps-sids) # self.debug("Received event %r from %s" % (event, event.src))
         if gstreamer.event_is_flumotion_reset(event):
             self._videorate.set_state(Gst.State.READY)
             self._videorate.set_state(Gst.State.PLAYING)

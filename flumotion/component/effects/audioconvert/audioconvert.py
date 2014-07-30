@@ -38,8 +38,8 @@ class AudioconvertBin(Gst.Bin):
     logCategory = "audiorate"
     RATE_CAPS = ', rate=%d'
     CHANNELS_CAPS = ', channels=%d'
-    CAPS_TEMPLATE = ("audio/x-raw-int %(extra_caps)s ;"
-                    "audio/x-raw-float %(extra_caps)s")
+    CAPS_TEMPLATE = ("audio/x-raw %(extra_caps)s ;"
+                    "audio/x-raw %(extra_caps)s")
 
     __gproperties__ = {
         'channels': (GObject.TYPE_UINT, 'channels',
@@ -89,12 +89,12 @@ class AudioconvertBin(Gst.Bin):
         self._capsfilter.link(self._identity)
 
         # Create source and sink pads
-        self._sinkPad = Gst.GhostPad.new('sink', self._audiorate.get_pad('sink'))
-        self._srcPad = Gst.GhostPad.new('src', self._identity.get_pad('src'))
+        self._sinkPad = Gst.GhostPad.new('sink', self._audiorate.get_static_pad('sink'))
+        self._srcPad = Gst.GhostPad.new('src', self._identity.get_static_pad('src'))
         self.add_pad(self._sinkPad)
         self.add_pad(self._srcPad)
 
-        self._sinkPad.set_event_function(self.eventfunc)
+        self._sinkPad.set_event_function_full(self.eventfunc)
 
         self._setSamplerate(samplerate)
         self._setChannels(channels)
@@ -150,7 +150,7 @@ class AudioconvertBin(Gst.Bin):
         else:
             raise AttributeError('unknown property %s' % property.name)
 
-    def eventfunc(self, pad, event):
+    def eventfunc(self, pad, parent, event):
         self.debug("Received event %r from %s" % (event, event.src))
         if gstreamer.event_is_flumotion_reset(event) and self._use_audiorate():
             self._audiorate.set_state(Gst.State.READY)
