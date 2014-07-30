@@ -43,7 +43,7 @@ class DecoderComponent(fc.ReconfigurableComponent):
     def configure_pipeline(self, pipeline, properties):
         # Handle decoder dynamic pads
         decoder = self.pipeline.get_by_name("decoder")
-        decoder.connect('new-decoded-pad', self._new_decoded_pad_cb)
+        decoder.connect('pad-added', self._pad_added_cb)
 
         self._add_video_effects()
         self._add_audio_effects()
@@ -101,18 +101,18 @@ class DecoderComponent(fc.ReconfigurableComponent):
         self.addEffect(self.akuscheduler)
         self.debug("KeyUnitsScheduler added")
 
-    def _new_decoded_pad_cb(self, decoder, pad, last):
+    def _pad_added_cb(self, decoder, pad):
         self.log("Decoder %s got new decoded pad %s", decoder, pad)
 
-        new_caps = pad.get_caps()
+        new_caps = pad.query_caps()
 
         # Select a compatible output element
         for outelem in self.get_output_elements():
-            output_pad = outelem.get_pad('sink')
+            output_pad = outelem.get_static_pad('sink')
             if output_pad.is_linked():
                 continue
 
-            pad_caps = output_pad.get_caps()
+            pad_caps = output_pad.query_caps()
             if not new_caps.is_subset(pad_caps):
                 continue
 
@@ -134,13 +134,13 @@ class DecoderComponent(fc.ReconfigurableComponent):
     def _plug_video_effects(self, pad):
         self.vr.sourcePad = pad
         self.vr.plug()
-        self.videoscaler.sourcePad = self.vr.effectBin.get_pad("src")
+        self.videoscaler.sourcePad = self.vr.effectBin.get_static_pad("src")
         self.videoscaler.plug()
-        self.vkuscheduler.sourcePad = self.videoscaler.effectBin.get_pad("src")
+        self.vkuscheduler.sourcePad = self.videoscaler.effectBin.get_static_pad("src")
         self.vkuscheduler.plug()
 
     def _plug_audio_effects(self, pad):
         self.ar.sourcePad = pad
         self.ar.plug()
-        self.akuscheduler.sourcePad = self.ar.effectBin.get_pad("src")
+        self.akuscheduler.sourcePad = self.ar.effectBin.get_static_pad("src")
         self.akuscheduler.plug()

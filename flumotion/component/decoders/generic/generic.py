@@ -76,15 +76,15 @@ class SyncKeeper(Gst.Element):
 
         # create the sink pads and set the chain and event function
         self.audiosink = Gst.Pad.new_from_template(self._audiosink, "audio-in")
-        self.audiosink.set_chain_function(lambda pad, buffer:
+        self.audiosink.set_chain_function_full(lambda pad, buffer:
             self.chainfunc(pad, buffer, self.audiosrc))
-        self.audiosink.set_event_function(lambda pad, buffer:
+        self.audiosink.set_event_function_full(lambda pad, buffer:
             self.eventfunc(pad, buffer, self.audiosrc))
         self.add_pad(self.audiosink)
         self.videosink = Gst.Pad.new_from_template(self._videosink, "video-in")
-        self.videosink.set_chain_function(lambda pad, buffer:
+        self.videosink.set_chain_function_full(lambda pad, buffer:
             self.chainfunc(pad, buffer, self.videosrc))
-        self.videosink.set_event_function(lambda pad, buffer:
+        self.videosink.set_event_function_full(lambda pad, buffer:
             self.eventfunc(pad, buffer, self.videosrc))
         self.add_pad(self.videosink)
 
