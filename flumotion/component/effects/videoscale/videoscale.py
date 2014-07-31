@@ -88,12 +88,18 @@ class VideoscaleBin(Gst.Bin):
         self._configureOutput()
 
         self._identity.set_property('silent', True)
-        # Add the setcaps function in the sink pad
-        # FIXME(aps-sids) #self._sinkPad.set_setcaps_function(self._sinkSetCaps)
+
+        self._sinkPad.set_event_function_full(self.eventfunc)
+
         # Add a callback for caps changes in the videoscaler source pad
         # to recalculate the scale correction
         self._videoscaler.get_static_pad('src').connect(
             'notify::caps', self._applyScaleCorrection)
+
+    def eventfunc(self, pad, parent, event):
+        if event.type == Gst.EventType.CAPS:
+            caps = event.parse_caps()
+            self._sinkSetCaps(pad, caps)
 
     def _updateFilter(self, blockPad):
 
@@ -127,7 +133,8 @@ class VideoscaleBin(Gst.Bin):
         if self._height:
             p = "%s,height=(int)%d" % (p, self._height)
         p = "video/x-raw%s;video/x-raw%s" % (p, p)
-        # FIXME(aps-sids) #self.info("out:%s" % p)
+        # FIXME(aps-sids) Don't know why info is not among the attributes of this object
+        #self.info("out:%s" % p)
         caps = Gst.Caps(p)
 
         self._capsfilter.set_property("caps", caps)

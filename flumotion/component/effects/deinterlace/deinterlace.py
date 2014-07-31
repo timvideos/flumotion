@@ -270,6 +270,7 @@ class Deinterlace(feedcomponent.PostProcEffect):
     I am an effect that can be added to any component that has a deinterlacer
     component and a way of changing the deinterlace method.
     """
+    
     logCategory = "deinterlace"
 
     def __init__(self, name, sourcePad, pipeline, mode, method):

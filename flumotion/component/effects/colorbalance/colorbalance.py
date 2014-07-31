@@ -15,8 +15,7 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
-import gst.interfaces
+from gi.repository import Gst
 
 from flumotion.component import feedcomponent
 
@@ -40,7 +39,7 @@ class Colorbalance(feedcomponent.Effect):
         @param contrast: the colorbalance contrast, as a percentage
         @type contrast: float
         @param pipeline: the pipeline
-        @type pipeline: L{gst.Pipeline}
+        @type pipeline: L{Gst.Pipeline}
         """
         self.debug("colorbalance init")
         feedcomponent.Effect.__init__(self, name)
@@ -68,10 +67,10 @@ class Colorbalance(feedcomponent.Effect):
         @param message: the message received
         """
         t = message.type
-        if t == gst.MESSAGE_STATE_CHANGED and message.src == self._element:
+        if t == Gst.MessageType.STATE_CHANGED and message.src == self._element:
             (old, new, pending) = message.parse_state_changed()
             # we have a state change
-            if old == gst.STATE_READY and new == gst.STATE_PAUSED:
+            if old == Gst.State.READY and new == Gst.State.PAUSED:
                 self._setInitialColorBalance(hue,
                     saturation, brightness, contrast)
 
@@ -113,8 +112,8 @@ class Colorbalance(feedcomponent.Effect):
         return value
 
     def _setInitialColorBalance(self, hue, saturation, brightness, contrast):
-        self._channels = self._element.list_colorbalance_channels()
-        self.debug('colorbalance channels: %d' % len(self._channels))
+        #self._channels = self._element.list_colorbalance_channels()
+        #self.debug('colorbalance channels: %d' % len(self._channels))
         self.effect_setColorBalanceProperty('Hue', hue)
         self.effect_setColorBalanceProperty('Saturation', saturation)
         self.effect_setColorBalanceProperty('Brightness', brightness)

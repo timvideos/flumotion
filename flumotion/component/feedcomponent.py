@@ -788,6 +788,11 @@ class ReconfigurableComponent(ParseLaunchComponent):
                 self.info("INCAPS: Got buffer but we're still disconnected.")
                 return True
 
+            buff = buff.get_buffer()
+
+            '''
+            #FIXME(aps-sids): Not able to figure out what this code is supposed to do
+
             if not buff.flag_is_set(Gst.BUFFER_FLAG_IN_CAPS):
                 return True
 
@@ -797,6 +802,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
                 resets = self.uiState.get('reset-count')
                 newcaps['count'] = resets
                 buff.set_caps(Gst.Caps(newcaps))
+            '''
             return True
 
         self.log('RESET: installing event probes for detecting changes')
@@ -812,7 +818,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
             self.debug('RESET: adding event probe for %s', elem.get_name())
             elem.get_static_pad('sink').add_probe(Gst.PadProbeType.EVENT_BOTH,
                                                         output_reset_event)
-
+    global blocked_eater_probes
     blocked_eater_probes = []
 
     def _block_eaters(self):
@@ -821,7 +827,7 @@ class ReconfigurableComponent(ParseLaunchComponent):
         """
         for elem in self.get_input_elements():
             pad = elem.get_static_pad('src')
-            self.debug("RESET: Blocking pad %s", pad)
+            self.debug("RESET: Blocking eater pad %s", pad)
             blocked_eater_probes.append(pad.add_probe(
                             Gst.PadProbeType.BLOCK, self._on_eater_blocked, None))
 
@@ -942,10 +948,11 @@ class ReconfigurableComponent(ParseLaunchComponent):
         self.log("RESET: Pad %s %s", pad,
                  (blocked and "blocked") or "unblocked")
 
-    def _on_eater_blocked(self, pad, blocked):
+    def _on_eater_blocked(self, pad, blocked, *args):
         self._on_pad_blocked(pad, blocked)
         if blocked:
             peer = pad.get_peer()
+            # FIXME(aps-sids): Next line seems to create problems since it returns false
             peer.send_event(Gst.Event.new_flush_start())
             #peer.send_event(Gst.event_new_eos())
             #self._unlink_pads(pad.get_parent(), [Gst.PAD_SRC])

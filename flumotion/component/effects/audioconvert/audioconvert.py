@@ -94,7 +94,7 @@ class AudioconvertBin(Gst.Bin):
         self.add_pad(self._sinkPad)
         self.add_pad(self._srcPad)
 
-        self._sinkPad.set_event_function(self.eventfunc)
+        self._sinkPad.set_event_function_full(self.eventfunc)
 
         self._setSamplerate(samplerate)
         self._setChannels(channels)
@@ -150,7 +150,7 @@ class AudioconvertBin(Gst.Bin):
         else:
             raise AttributeError('unknown property %s' % property.name)
 
-    def eventfunc(self, pad, event):
+    def eventfunc(self, pad, parent, event):
         self.debug("Received event %r from %s" % (event, event.src))
         if gstreamer.event_is_flumotion_reset(event) and self._use_audiorate():
             self._audiorate.set_state(Gst.State.READY)

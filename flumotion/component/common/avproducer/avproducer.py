@@ -15,7 +15,7 @@
 #
 # Headers in this file shall remain intact.
 
-import gst
+from gi.repository import Gst
 from twisted.internet import defer
 
 from flumotion.common import errors, messages
@@ -78,10 +78,10 @@ class AVProducerBase(feedcomponent.ParseLaunchComponent):
         self.add_borders = props.get('add-borders', True)
         self.deintMode = props.get('deinterlace-mode', 'auto')
         self.deintMethod = props.get('deinterlace-method', 'ffmpeg')
-        self.kuinterval = props.get('keyunits-interval', 0) * gst.MSECOND
+        self.kuinterval = props.get('keyunits-interval', 0) * Gst.MSECOND
         self.volume_level = props.get('volume', 1)
         fr = props.get('framerate', None)
-        self.framerate = fr and gst.Fraction(fr[0], fr[1]) or None
+        self.framerate = fr and Gst.Fraction(fr[0], fr[1]) or None
         self._parse_aditional_properties(props)
         return self.get_pipeline_template(props)
 
@@ -158,7 +158,7 @@ class AVProducerBase(feedcomponent.ParseLaunchComponent):
 
         # Add audio converter
         audioconverter = audioconvert.Audioconvert('audioconvert',
-            comp_level.get_pad("src"), pipeline, tolerance=40 * gst.MSECOND)
+            comp_level.get_pad("src"), pipeline, tolerance=40 * Gst.MSECOND)
         self.addEffect(audioconverter)
         audioconverter.plug()
 
