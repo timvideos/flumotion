@@ -15,6 +15,7 @@ SUBDIRS = \
 	icystreamer \
 	hlsstreamer \
 	httpstreamer \
+	justintv \
 	pipeline \
 	preview \
 	shout2

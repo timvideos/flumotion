@@ -183,7 +183,13 @@ class BaseJobHeaven(pb.Root, log.Loggable):
         # our particular Port, which creates Transports that we know how to
         # pass FDs over.
         self.debug("Listening for FD's on unix socket %s", self._socketPath)
-        port = reactor.listenWith(fdserver.FDPort, self._socketPath, f)
+
+        # listenWith is deprecated but the function never did much anyway
+        #
+        # port = reactor.listenWith(fdserver.FDPort, self._socketPath, f)
+        port = fdserver.FDPort(self._socketPath, f, reactor=reactor)
+        port.startListening()
+
         self._port = port
 
     ### portal.IRealm method
