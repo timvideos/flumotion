@@ -116,7 +116,7 @@ class DeinterlaceBin(Gst.Bin):
         self._sinkPeerPad = self._colorspace.get_static_pad('src')
         self._srcPeerPad = self._videorate.get_static_pad('sink')
 
-        self._sinkPad.set_event_function(self.eventfunc)
+        self._sinkPad.set_event_function_full(self.eventfunc)
 
         # Set the mode and method in the deinterlacer
         self._setMethod(method)
@@ -145,8 +145,9 @@ class DeinterlaceBin(Gst.Bin):
         if interlaced == self._interlaced:
             return True
         else:
-            self.debug("Input is%sinterlaced" %
-                (interlaced and " " or " not "))
+            # FIXME(aps-sids): Debug not an attribute
+            #self.debug("Input is%sinterlaced" %
+            #    (interlaced and " " or " not "))
             self._interlaced = interlaced
         # If we are in 'auto' mode and the interlaced field has changed,
         # switch to the appropiate deinterlacer
@@ -189,11 +190,12 @@ class DeinterlaceBin(Gst.Bin):
         reactor.callFromThread(blockPad.set_blocked_async,
             True, unlinkAndReplace, deinterlacerName)
 
-    def eventfunc(self, pad, event):
+    def eventfunc(self, pad, parent, event):
         if event.type == Gst.EventType.CAPS:
             caps = event.parse_caps()
             self._sinkSetCaps(pad, caps)
-        self.debug("Received event %r from %s" % (event, event.src))
+        # FIXME(aps-sids): same problem, debug not as an attribute
+        #self.debug("Received event %r from %s" % (event, event.src))
         if gstreamer.event_is_flumotion_reset(event):
             self._videorate.set_state(Gst.State.READY)
             self._videorate.set_state(Gst.State.PLAYING)

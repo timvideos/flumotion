@@ -151,7 +151,8 @@ class AudioconvertBin(Gst.Bin):
             raise AttributeError('unknown property %s' % property.name)
 
     def eventfunc(self, pad, parent, event):
-        self.debug("Received event %r from %s" % (event, event.src))
+        # FIXME(aps-sids): Don't know why this doesn't have debug as an attribute
+        #self.debug("Received event %r from %s" % (event, event.src))
         if gstreamer.event_is_flumotion_reset(event) and self._use_audiorate():
             self._audiorate.set_state(Gst.State.READY)
             self._audiorate.set_state(Gst.State.PLAYING)
