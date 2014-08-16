@@ -99,7 +99,7 @@ class VideoscaleBin(Gst.Bin):
     def eventfunc(self, pad, parent, event):
         if event.type == Gst.EventType.CAPS:
             caps = event.parse_caps()
-            self._sinkSetCaps(pad, caps)
+            return self._sinkSetCaps(pad, caps)
 
     def _updateFilter(self, blockPad):
 

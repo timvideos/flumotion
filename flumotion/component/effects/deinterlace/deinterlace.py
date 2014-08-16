@@ -113,7 +113,7 @@ class DeinterlaceBin(Gst.Bin):
         self.add_pad(self._srcPad)
 
         # Store deinterlacer's sink and source peer pads
-        self._sinkPeerPad = self._colorspace.get_static_pad('src')
+        self._sinkPeerPad = self._colorfilter.get_static_pad('src')
         self._srcPeerPad = self._videorate.get_static_pad('sink')
 
         self._sinkPad.set_event_function_full(self.eventfunc)
@@ -193,7 +193,7 @@ class DeinterlaceBin(Gst.Bin):
     def eventfunc(self, pad, parent, event):
         if event.type == Gst.EventType.CAPS:
             caps = event.parse_caps()
-            self._sinkSetCaps(pad, caps)
+            return self._sinkSetCaps(pad, caps)
         # FIXME(aps-sids): same problem, debug not as an attribute
         #self.debug("Received event %r from %s" % (event, event.src))
         if gstreamer.event_is_flumotion_reset(event):

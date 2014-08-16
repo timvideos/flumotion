@@ -98,6 +98,7 @@ class DVSwitch(feedcomponent.ParseLaunchComponent):
         # unittest the pipeline
         # need a queue in case tcpserversink blocks somehow
         template = ('dvswitchsrc name=src %s'
+                    '    ! typefind'
                     '    ! tee name=t'
                     '    ! queue leaky=2 max-size-time=1000000000'
                     '    ! dvdemux name=demux'
