@@ -133,8 +133,6 @@ class VideoscaleBin(Gst.Bin):
         if self._height:
             p = "%s,height=(int)%d" % (p, self._height)
         p = "video/x-raw%s;video/x-raw%s" % (p, p)
-        # FIXME(aps-sids) Don't know why info is not among the attributes of this object
-        #self.info("out:%s" % p)
         caps = Gst.Caps(p)
 
         self._capsfilter.set_property("caps", caps)

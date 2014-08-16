@@ -78,7 +78,8 @@ class VideorateBin(Gst.Bin):
             raise AttributeError('unknown property %s' % property.name)
 
     def eventfunc(self, pad, parent, event):
-        # FIXME(aps-sids) # self.debug("Received event %r from %s" % (event, event.src))
+        if event.type == Gst.EventType.CAPS:
+            return True
         if gstreamer.event_is_flumotion_reset(event):
             self._videorate.set_state(Gst.State.READY)
             self._videorate.set_state(Gst.State.PLAYING)

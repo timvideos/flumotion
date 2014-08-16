@@ -137,17 +137,14 @@ class DeinterlaceBin(Gst.Bin):
             self._ratefilter.set_property('caps', Gst.Caps(
                 'video/x-raw, framerate=%s;'
                 'video/x-raw, framerate=%s' % (fr, fr)))
-        # Detect if it's an interlaced stream using the 'interlaced' field
+        # Detect if it's an interlaced stream using the 'interlace-mode' field
         try:
-            interlaced = struct['interlaced']
+            interlaced = struct.has_field("interlace-mode")
         except KeyError:
             interlaced = False
         if interlaced == self._interlaced:
             return True
         else:
-            # FIXME(aps-sids): Debug not an attribute
-            #self.debug("Input is%sinterlaced" %
-            #    (interlaced and " " or " not "))
             self._interlaced = interlaced
         # If we are in 'auto' mode and the interlaced field has changed,
         # switch to the appropiate deinterlacer
@@ -194,8 +191,6 @@ class DeinterlaceBin(Gst.Bin):
         if event.type == Gst.EventType.CAPS:
             caps = event.parse_caps()
             return self._sinkSetCaps(pad, caps)
-        # FIXME(aps-sids): same problem, debug not as an attribute
-        #self.debug("Received event %r from %s" % (event, event.src))
         if gstreamer.event_is_flumotion_reset(event):
             self._videorate.set_state(Gst.State.READY)
             self._videorate.set_state(Gst.State.PLAYING)
