@@ -89,17 +89,10 @@ class VideoscaleBin(Gst.Bin):
 
         self._identity.set_property('silent', True)
 
-        self._sinkPad.set_event_function_full(self.eventfunc)
-
         # Add a callback for caps changes in the videoscaler source pad
         # to recalculate the scale correction
         self._videoscaler.get_static_pad('src').connect(
             'notify::caps', self._applyScaleCorrection)
-
-    def eventfunc(self, pad, parent, event):
-        if event.type == Gst.EventType.CAPS:
-            caps = event.parse_caps()
-            return self._sinkSetCaps(pad, caps)
 
     def _updateFilter(self, blockPad):
 

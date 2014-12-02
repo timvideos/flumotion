@@ -116,8 +116,6 @@ class DeinterlaceBin(Gst.Bin):
         self._sinkPeerPad = self._colorfilter.get_static_pad('src')
         self._srcPeerPad = self._videorate.get_static_pad('sink')
 
-        self._sinkPad.set_event_function_full(self.eventfunc)
-
         # Set the mode and method in the deinterlacer
         self._setMethod(method)
         self._setMode(mode)
@@ -186,15 +184,6 @@ class DeinterlaceBin(Gst.Bin):
             (self.deinterlacerName, deinterlacerName, self.method))
         reactor.callFromThread(blockPad.set_blocked_async,
             True, unlinkAndReplace, deinterlacerName)
-
-    def eventfunc(self, pad, parent, event):
-        if event.type == Gst.EventType.CAPS:
-            caps = event.parse_caps()
-            return self._sinkSetCaps(pad, caps)
-        if gstreamer.event_is_flumotion_reset(event):
-            self._videorate.set_state(Gst.State.READY)
-            self._videorate.set_state(Gst.State.PLAYING)
-        return self._srcPad.push_event(event)
 
     def _setMode(self, mode):
         if mode not in DEINTERLACE_MODE:

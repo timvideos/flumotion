@@ -56,8 +56,6 @@ class VideorateBin(Gst.Bin):
         self.add_pad(self._sinkPad)
         self.add_pad(self._srcPad)
 
-        self._sinkPad.set_event_function_full(self.eventfunc)
-
         self._setFramerate(framerate)
 
     def _setFramerate(self, framerate):
@@ -76,14 +74,6 @@ class VideorateBin(Gst.Bin):
             return self._framerate
         else:
             raise AttributeError('unknown property %s' % property.name)
-
-    def eventfunc(self, pad, parent, event):
-        if event.type == Gst.EventType.CAPS:
-            return True
-        if gstreamer.event_is_flumotion_reset(event):
-            self._videorate.set_state(Gst.State.READY)
-            self._videorate.set_state(Gst.State.PLAYING)
-        return self._srcPad.push_event(event)
 
     def framerateToString(self):
         if self._framerate is None:
