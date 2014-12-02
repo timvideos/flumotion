@@ -17,8 +17,8 @@
 
 import sys
 
-import gobject
-import gst
+from gi.repository import GObject
+from gi.repository import Gst
 
 from flumotion.common.i18n import gettexter
 from flumotion.component import feedcomponent
@@ -30,7 +30,7 @@ T_ = gettexter()
 DEFAULT_TOLERANCE = 20000000 # 20ms
 
 
-class AudioconvertBin(gst.Bin):
+class AudioconvertBin(Gst.Bin):
     """
     I am a GStreamer bin that can convert an an audio stream, changing its
     samplerate and the number of channels
@@ -38,45 +38,45 @@ class AudioconvertBin(gst.Bin):
     logCategory = "audiorate"
     RATE_CAPS = ', rate=%d'
     CHANNELS_CAPS = ', channels=%d'
-    CAPS_TEMPLATE = ("audio/x-raw-int %(extra_caps)s ;"
-                    "audio/x-raw-float %(extra_caps)s")
+    CAPS_TEMPLATE = ("audio/x-raw %(extra_caps)s ;"
+                    "audio/x-raw %(extra_caps)s")
 
     __gproperties__ = {
-        'channels': (gobject.TYPE_UINT, 'channels',
+        'channels': (GObject.TYPE_UINT, 'channels',
                        'Audio channels', 1, 8, 2,
-                       gobject.PARAM_READWRITE),
-        'samplerate': (gobject.TYPE_UINT, 'samplerate',
+                       GObject.PARAM_READWRITE),
+        'samplerate': (GObject.TYPE_UINT, 'samplerate',
                        'Audio samplerate', 1, 200000, 44100,
-                       gobject.PARAM_READWRITE),
-        'tolerance': (gobject.TYPE_UINT, 'tolerance',
+                       GObject.PARAM_READWRITE),
+        'tolerance': (GObject.TYPE_UINT, 'tolerance',
                        'Correct imperfect timestamps when it exeeds the '
                        'tolerance', 0, sys.maxint, DEFAULT_TOLERANCE,
-                       gobject.PARAM_READWRITE)}
+                       GObject.PARAM_READWRITE)}
 
     def __init__(self, channels=None, samplerate=None,
                  tolerance=DEFAULT_TOLERANCE):
-        gst.Bin.__init__(self)
+        Gst.Bin.__init__(self)
         self._samplerate = samplerate
         self._samplerate_caps = ''
         self._channels = channels
         self._channels_caps = ''
 
         if self._use_audiorate():
-            self._audiorate = gst.element_factory_make("audiorate")
+            self._audiorate = Gst.ElementFactory.make("audiorate")
             self._audiorate.set_property("skip-to-first", True)
         else:
-            self._audiorate = gst.element_factory_make("identity")
+            self._audiorate = Gst.ElementFactory.make("identity")
             self._audiorate.set_property("silent", True)
 
-        self._audioconv = gst.element_factory_make("audioconvert")
+        self._audioconv = Gst.ElementFactory.make("audioconvert")
 
         resampler = 'audioresample'
         if gstreamer.element_factory_exists('legacyresample'):
             resampler = 'legacyresample'
-        self._audioresample = gst.element_factory_make(resampler)
+        self._audioresample = Gst.ElementFactory.make(resampler)
 
-        self._capsfilter = gst.element_factory_make("capsfilter")
-        self._identity = gst.parse_launch("identity silent=true")
+        self._capsfilter = Gst.ElementFactory.make("capsfilter")
+        self._identity = Gst.parse_launch("identity silent=true")
         self.add(self._audiorate)
         self.add(self._audioconv)
         self.add(self._audioresample)
@@ -89,12 +89,10 @@ class AudioconvertBin(gst.Bin):
         self._capsfilter.link(self._identity)
 
         # Create source and sink pads
-        self._sinkPad = gst.GhostPad('sink', self._audiorate.get_pad('sink'))
-        self._srcPad = gst.GhostPad('src', self._identity.get_pad('src'))
+        self._sinkPad = Gst.GhostPad.new('sink', self._audiorate.get_static_pad('sink'))
+        self._srcPad = Gst.GhostPad.new('src', self._identity.get_static_pad('src'))
         self.add_pad(self._sinkPad)
         self.add_pad(self._srcPad)
-
-        self._sinkPad.set_event_function(self.eventfunc)
 
         self._setSamplerate(samplerate)
         self._setChannels(channels)
@@ -113,14 +111,14 @@ class AudioconvertBin(gst.Bin):
         self._channels_caps = ''
         if self._channels is not None:
             self._channels_caps = self.CHANNELS_CAPS % channels
-        self._capsfilter.set_property('caps', gst.Caps(self._getCapsString()))
+        self._capsfilter.set_property('caps', Gst.Caps(self._getCapsString()))
 
     def _setSamplerate(self, samplerate):
         self._samplerate = samplerate
         self._samplerate_caps = ''
         if self._samplerate is not None:
             self._samplerate_caps = self.RATE_CAPS % samplerate
-        self._capsfilter.set_property('caps', gst.Caps(self._getCapsString()))
+        self._capsfilter.set_property('caps', Gst.Caps(self._getCapsString()))
 
     def _setTolerance(self, tolerance):
         self._tolerance = tolerance
@@ -149,13 +147,6 @@ class AudioconvertBin(gst.Bin):
             return self._tolerance
         else:
             raise AttributeError('unknown property %s' % property.name)
-
-    def eventfunc(self, pad, event):
-        self.debug("Received event %r from %s" % (event, event.src))
-        if gstreamer.event_is_flumotion_reset(event) and self._use_audiorate():
-            self._audiorate.set_state(gst.STATE_READY)
-            self._audiorate.set_state(gst.STATE_PLAYING)
-        return self._srcPad.push_event(event)
 
 
 class Audioconvert(feedcomponent.PostProcEffect):
