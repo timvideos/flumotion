@@ -140,7 +140,7 @@ class VideoscaleBin(Gst.Bin):
         # to 4:3 or 16:9
         # FIXME: Add the option to strech or reduce the image instead of
         # padding with a black line
-        c = pad.get_negotiated_caps()
+        c = pad.get_current_caps()
         if c is None:
             return
 
