@@ -33,7 +33,7 @@ To install system requirements on Ubuntu, run follow commands:
 ```bash
 $ sudo add-apt-repository ppa:gstreamer-developers/ppa
 $ sudo apt-get update
-$ sudo apt-get install libtool autopoint autoconf libxml-parser-perl python-gi python-gobject-dev python-gst-1.0 gir1.2-gstreamer-1.0 gir1.2-gst-plugins-base-1.0 libglib2.0-dev gir1.2-glib-2.0 libgirepository1.0-dev libglib2.0-0 gir1.2-gtk-3 pkg-config libglib2.0-dev liborc-0.4-dev python-twisted python-pyparsing python-kiwi python-dateutil
+$ sudo apt-get install subversion libtool autopoint autoconf libxml-parser-perl python-gi python-gobject-dev python-gst-1.0 gir1.2-gstreamer-1.0 gir1.2-gst-plugins-base-1.0 libglib2.0-dev gir1.2-glib-2.0 libgirepository1.0-dev libglib2.0-0 gir1.2-gtk-3 pkg-config libglib2.0-dev liborc-0.4-dev python-twisted python-pyparsing python-kiwi python-dateutil
 
 # we can't use latest python-icalendar till a few things are fixed
 
